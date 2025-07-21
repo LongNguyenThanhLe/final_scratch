@@ -809,6 +809,7 @@ class Stage extends React.Component {
         const {
             vm, // eslint-disable-line no-unused-vars
             onActivateColorPicker, // eslint-disable-line no-unused-vars
+            anyModalVisible, // <-- new prop
             ...props
         } = this.props;
         return (
@@ -844,6 +845,8 @@ class Stage extends React.Component {
                 onFoodClick={this.handleFoodClick}
                 onCollectWaste={this.collectFood}
                 onWasteClick={this.handleWasteClick}
+                anyModalVisible={anyModalVisible}
+                isStarted={this.props.isStarted}
                 {...props}
             />
         );
@@ -867,14 +870,10 @@ Stage.defaultProps = {
 };
 
 const mapStateToProps = (state) => ({
-    isColorPicking: state.scratchGui.colorPicker.active,
-    isFullScreen: state.scratchGui.mode.isFullScreen,
-    isStarted: state.scratchGui.vmStatus.started,
-    micIndicator: state.scratchGui.micIndicator,
-    // Do not use editor drag style in fullscreen or player mode.
-    useEditorDragStyle: !(
-        state.scratchGui.mode.isFullScreen || state.scratchGui.mode.isPlayerOnly
+    anyModalVisible: Object.keys(state.scratchGui.modals).some(
+        (key) => state.scratchGui.modals[key]
     ),
+    isStarted: state.scratchGui.vmStatus.started,
 });
 
 const mapDispatchToProps = (dispatch) => ({
@@ -882,4 +881,4 @@ const mapDispatchToProps = (dispatch) => ({
     onDeactivateColorPicker: (color) => dispatch(deactivateColorPicker(color)),
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(Stage);
+export default connect(mapStateToProps)(Stage);

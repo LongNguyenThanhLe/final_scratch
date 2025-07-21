@@ -63,6 +63,7 @@ const StageComponent = (props) => {
         disableSleep,
         petEnabled,
         onTogglePet,
+        anyModalVisible,
         ...boxProps
     } = props;
 
@@ -322,7 +323,7 @@ const StageComponent = (props) => {
                                     Sleep
                                 </ButtonComponent>
                             </div>
-                            {isSleeping && (
+                            {isSleeping && !anyModalVisible && (
                                 <div className={styles.sleepOverlay}>
                                     <span role="img" aria-label="sleeping">
                                         😴
@@ -461,6 +462,7 @@ StageComponent.propTypes = {
     disableSleep: PropTypes.bool,
     petEnabled: PropTypes.bool,
     onTogglePet: PropTypes.func,
+    anyModalVisible: PropTypes.bool,
 };
 StageComponent.defaultProps = {
     dragRef: () => {},

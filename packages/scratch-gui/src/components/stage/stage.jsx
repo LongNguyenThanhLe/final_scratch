@@ -66,6 +66,14 @@ const StageComponent = (props) => {
         ...boxProps
     } = props;
 
+    // Debug log for stat props
+    console.log("Stat board props:", {
+        hunger,
+        cleanliness,
+        happiness,
+        energy,
+    });
+
     const stageDimensions = getStageDimensions(stageSize, isFullScreen);
     const foodEmojis = ["\ud83c\udf4e", "\ud83e\uddb4", "\ud83d\udc1f"];
 
@@ -189,7 +197,7 @@ const StageComponent = (props) => {
                                         <div
                                             className={styles.metricBar}
                                             style={{
-                                                width: `${hunger}%`,
+                                                width: `${100 - hunger}%`, // 0 = full, 100 = starving
                                                 backgroundColor:
                                                     hunger > 70
                                                         ? "#ff6b6b"
@@ -290,11 +298,7 @@ const StageComponent = (props) => {
                                         disableFeed
                                     }
                                 >
-                                    Feed (
-                                    {collectedFood && collectedFood.length
-                                        ? collectedFood.length
-                                        : 0}
-                                    )
+                                    Feed ({collectedFood})
                                 </ButtonComponent>
                                 <ButtonComponent
                                     iconSrc={playIcon}
@@ -437,7 +441,7 @@ StageComponent.propTypes = {
             type: PropTypes.number, // 0: food, 1: waste, 2: collected food
         })
     ),
-    collectedFood: PropTypes.arrayOf(PropTypes.string),
+    collectedFood: PropTypes.number,
     onFoodClick: PropTypes.func,
     wasteItems: PropTypes.arrayOf(
         PropTypes.shape({

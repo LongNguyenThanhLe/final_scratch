@@ -87,22 +87,27 @@ const StageComponent = (props) => {
                 onDoubleClick={onDoubleClick}
                 onClick={props.onStageClick}
             >
-                <div
-                    style={{
-                        position: "absolute",
-                        top: 10,
-                        left: 10,
-                        zIndex: 2000,
-                    }}
-                >
-                    <Switch
-                        checked={petEnabled}
-                        onChange={onTogglePet}
-                        label={
-                            petEnabled ? "Virtual Pet: ON" : "Virtual Pet: OFF"
-                        }
-                    />
-                </div>
+                {/* Only show the Virtual Pet switch if the project has started and no modal is visible */}
+                {isStarted && !anyModalVisible && (
+                    <div
+                        style={{
+                            position: "absolute",
+                            top: 10,
+                            left: 10,
+                            zIndex: 2000,
+                        }}
+                    >
+                        <Switch
+                            checked={petEnabled}
+                            onChange={onTogglePet}
+                            label={
+                                petEnabled
+                                    ? "Virtual Pet: ON"
+                                    : "Virtual Pet: OFF"
+                            }
+                        />
+                    </div>
+                )}
                 <Box
                     className={classNames(styles.stage, {
                         [styles.fullScreen]: isFullScreen,

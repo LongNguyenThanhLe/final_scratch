@@ -275,7 +275,7 @@ const StageComponent = (props) => {
                                     style={{
                                         position: "absolute",
                                         left: "50%",
-                                        bottom: "6rem",
+                                        bottom: "2.5rem", // Even closer to the button bar
                                         transform: "translateX(-50%)",
                                         zIndex: 1000,
                                     }}

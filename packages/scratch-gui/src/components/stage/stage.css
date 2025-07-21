@@ -310,30 +310,6 @@ stage doesn't "spill" out from under its rounded corners. instead, shift these o
     text-align: center;
     animation: speechBubblePop 0.3s ease-out;
 }
-.petSpeechBubble::after {
-    content: "";
-    position: absolute;
-    bottom: -8px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 8px solid transparent;
-    border-right: 8px solid transparent;
-    border-top: 8px solid #333;
-}
-.petSpeechBubble::before {
-    content: "";
-    position: absolute;
-    bottom: -6px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 0;
-    height: 0;
-    border-left: 6px solid transparent;
-    border-right: 6px solid transparent;
-    border-top: 6px solid #fff;
-}
 @keyframes speechBubblePop {
     0% {
         opacity: 0;

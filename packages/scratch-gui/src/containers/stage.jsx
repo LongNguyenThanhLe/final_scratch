@@ -68,9 +68,9 @@ class Stage extends React.Component {
             colorInfo: null,
             question: null,
             hunger: 50, // 0 = full, 100 = starving
-            cleanliness: 50, // 0 = dirty, 100 = clean
+            cleanliness: 100, // 0 = dirty, 100 = clean
             happiness: 50, // 0 = sad, 100 = very happy
-            energy: 50, // 0 = tired, 100 = fully rested
+            energy: 100, // 0 = tired, 100 = fully rested
             petReactionMessage: null,
             petSpeechMessage: null,
             petSpeechVisible: false,
@@ -148,8 +148,9 @@ class Stage extends React.Component {
         }
         this.updateRect();
         this.renderer.resize(this.rect.width, this.rect.height);
-        this.checkPetNeeds();
-        this.decayPetStats();
+        // Removed to prevent infinite update loop:
+        // this.checkPetNeeds();
+        // this.decayPetStats();
         this.handleTargetsUpdate();
     }
     componentWillUnmount() {

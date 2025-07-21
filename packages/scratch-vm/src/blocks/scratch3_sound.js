@@ -174,7 +174,11 @@ class Scratch3SoundBlocks {
     }
 
     playSoundAndWait(args, util) {
-        return this._playSound(args, util, STORE_WAITING);
+        const result = this._playSound(args, util, STORE_WAITING);
+        if (util.target.sprite) {
+            util.runtime.emit("PET_PLAYED_WITH", util.target);
+        }
+        return result;
     }
 
     _playSound(args, util, storeWaiting) {

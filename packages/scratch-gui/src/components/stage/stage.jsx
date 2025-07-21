@@ -192,7 +192,7 @@ const StageComponent = (props) => {
                             <div className={styles.petStatusRow}>
                                 <div className={styles.petMetric}>
                                     <span className={styles.metricLabel}>
-                                        Hunger:
+                                        Hunger
                                     </span>
                                     <div className={styles.metricBarWrapper}>
                                         <div
@@ -211,7 +211,7 @@ const StageComponent = (props) => {
                                 </div>
                                 <div className={styles.petMetric}>
                                     <span className={styles.metricLabel}>
-                                        Cleanliness:
+                                        Clean
                                     </span>
                                     <div className={styles.metricBarWrapper}>
                                         <div
@@ -230,7 +230,7 @@ const StageComponent = (props) => {
                                 </div>
                                 <div className={styles.petMetric}>
                                     <span className={styles.metricLabel}>
-                                        Happiness:
+                                        Happy
                                     </span>
                                     <div className={styles.metricBarWrapper}>
                                         <div
@@ -249,7 +249,7 @@ const StageComponent = (props) => {
                                 </div>
                                 <div className={styles.petMetric}>
                                     <span className={styles.metricLabel}>
-                                        Energy:
+                                        Energy
                                     </span>
                                     <div className={styles.metricBarWrapper}>
                                         <div

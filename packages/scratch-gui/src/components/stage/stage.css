@@ -122,7 +122,7 @@ stage doesn't "spill" out from under its rounded corners. instead, shift these o
     display: flex;
     justify-content: center;
     align-items: center;
-    background: rgba(0,0,0,0.25);
+    background: rgba(0, 0, 0, 0.25);
     border-radius: 0.5rem;
     pointer-events: all;
     cursor: pointer;
@@ -131,7 +131,7 @@ stage doesn't "spill" out from under its rounded corners. instead, shift these o
 .green-flag-overlay {
     padding: 1rem;
     border-radius: 100%;
-    background: rgba(255,255,255,0.75);
+    background: rgba(255, 255, 255, 0.75);
     border: 3px solid $ui-white;
     display: flex;
     justify-content: center;
@@ -146,9 +146,234 @@ stage doesn't "spill" out from under its rounded corners. instead, shift these o
     object-fit: contain;
 }
 
-
-
 @keyframes flash {
-    0% { opacity: 1; }
-    100% { opacity: 0; }
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+/* --- Virtual Pet Feature Styles --- */
+.foodItem {
+    font-size: 2rem;
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+    transition: all 0.2s ease;
+    user-select: none;
+}
+.foodItem:hover {
+    transform: translate(-50%, -50%) scale(1.2);
+    filter: drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.4));
+}
+.foodEmoji {
+    display: block;
+    animation: foodBounce 2s ease-in-out infinite;
+}
+@keyframes foodBounce {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}
+.foodFading {
+    opacity: 0;
+    transition: opacity 0.5s;
+}
+.petButtonRow {
+    position: absolute;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 1.5rem;
+    z-index: 10;
+    pointer-events: auto;
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 2rem;
+    padding: 0.5rem 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    align-items: center;
+}
+.petButtonRow > button {
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+.petButtonRow > button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.petButtonRow > button:active {
+    transform: translateY(0px);
+    transition: transform 0.1s ease;
+}
+.petButtonRow > button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+.petButtonRow > button:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+.petStatusRow {
+    position: absolute;
+    top: 1.2rem;
+    right: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 0.8rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    z-index: 12;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    min-width: 240px;
+}
+.petMetric {
+    display: flex;
+    align-items: center;
+    gap: 0.05rem;
+}
+.metricLabel {
+    min-width: 70px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #333;
+}
+.metricBarWrapper {
+    flex: 1;
+    height: 8px;
+    background: #f0f0f0;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+}
+.metricBar {
+    height: 100%;
+    border-radius: 4px 0 0 4px;
+    transition: width 0.3s ease, background-color 0.3s ease;
+    min-width: 3px;
+}
+.petReactionMessage {
+    position: absolute;
+    top: 4.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 200, 0.95);
+    border-radius: 1.2rem;
+    padding: 0.7rem 2rem;
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #b8860b;
+    z-index: 15;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    opacity: 1;
+    animation: petReactionFade 1.5s linear forwards;
+}
+@keyframes petReactionFade {
+    0% {
+        opacity: 1;
+    }
+    80% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+.petSpeechBubble {
+    position: absolute;
+    background: #fff;
+    border: 2px solid #333;
+    border-radius: 15px;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #333;
+    z-index: 20;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-width: 140px;
+    text-align: center;
+    animation: speechBubblePop 0.3s ease-out;
+}
+.petSpeechBubble::after {
+    content: "";
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid #333;
+}
+.petSpeechBubble::before {
+    content: "";
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid #fff;
+}
+@keyframes speechBubblePop {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+.wasteItem {
+    font-size: 2.2rem;
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.25));
+    user-select: none;
+    transition: opacity 0.5s, transform 0.2s;
+    opacity: 1;
+    pointer-events: auto;
+}
+.wasteItem:hover {
+    transform: translate(-50%, -50%) scale(1.15) rotate(-10deg);
+    filter: drop-shadow(3px 3px 8px rgba(0, 0, 0, 0.35));
+}
+.wasteFading {
+    opacity: 0;
+}
+.sleepOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: #fff;
+    font-weight: bold;
+    pointer-events: all;
+    text-shadow: 0 2px 8px #000;
+}
+.sleepCountdown {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-top: 1rem;
+    color: #ffe082;
+    text-shadow: 0 2px 8px #000;
 }

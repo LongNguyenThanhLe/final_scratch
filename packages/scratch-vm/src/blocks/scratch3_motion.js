@@ -116,16 +116,25 @@ class Scratch3MotionBlocks {
     turnRight(args, util) {
         const degrees = Cast.toNumber(args.DEGREES);
         util.target.setDirection(util.target.direction + degrees);
+        if (util.target.sprite) {
+            util.runtime.emit("PET_PLAYED_WITH", util.target);
+        }
     }
 
     turnLeft(args, util) {
         const degrees = Cast.toNumber(args.DEGREES);
         util.target.setDirection(util.target.direction - degrees);
+        if (util.target.sprite) {
+            util.runtime.emit("PET_PLAYED_WITH", util.target);
+        }
     }
 
     pointInDirection(args, util) {
         const direction = Cast.toNumber(args.DIRECTION);
         util.target.setDirection(direction);
+        if (util.target.sprite) {
+            util.runtime.emit("PET_PLAYED_WITH", util.target);
+        }
     }
 
     pointTowards(args, util) {
@@ -151,6 +160,9 @@ class Scratch3MotionBlocks {
         const dy = targetY - util.target.y;
         const direction = 90 - MathUtil.radToDeg(Math.atan2(dy, dx));
         util.target.setDirection(direction);
+        if (util.target.sprite) {
+            util.runtime.emit("PET_PLAYED_WITH", util.target);
+        }
     }
 
     glide(args, util) {
@@ -171,6 +183,9 @@ class Scratch3MotionBlocks {
             } else {
                 // Finished: move to final position.
                 util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
+                if (util.target.sprite) {
+                    util.runtime.emit("PET_PLAYED_WITH", util.target);
+                }
             }
         } else {
             // First time: save data for future use.
@@ -274,6 +289,9 @@ class Scratch3MotionBlocks {
     setX(args, util) {
         const x = Cast.toNumber(args.X);
         util.target.setXY(x, util.target.y);
+        if (util.target.sprite) {
+            util.runtime.emit("PET_PLAYED_WITH", util.target);
+        }
     }
 
     changeY(args, util) {
@@ -287,6 +305,9 @@ class Scratch3MotionBlocks {
     setY(args, util) {
         const y = Cast.toNumber(args.Y);
         util.target.setXY(util.target.x, y);
+        if (util.target.sprite) {
+            util.runtime.emit("PET_PLAYED_WITH", util.target);
+        }
     }
 
     getX(args, util) {

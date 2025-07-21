@@ -184,7 +184,7 @@ const StageComponent = (props) => {
                                         title="Click to clean!"
                                     >
                                         <span role="img" aria-label="waste">
-                                            \ud83d\udca9
+                                            💩
                                         </span>
                                     </div>
                                 ))}

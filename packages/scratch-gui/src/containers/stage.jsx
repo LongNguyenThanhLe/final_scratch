@@ -109,8 +109,10 @@ class Stage extends React.Component {
         this.props.vm.runtime.addListener("QUESTION", this.questionListener);
         // Start food spawn interval every 20s
         this.foodSpawnInterval = setInterval(() => this.spawnFood(), 20000);
-        // Start stat decay interval every 20s
-        this.statDecayInterval = setInterval(() => this.decayPetStats(), 20000);
+        // Start stat decay interval every 1s for smooth animation
+        this.statDecayInterval = setInterval(() => this.decayPetStats(), 1000);
+        // Start waste spawn interval every 3 minutes
+        this.wasteSpawnInterval = setInterval(() => this.spawnWaste(), 180000);
         this.startPetIntervals();
         this.petNeedsInterval = setInterval(this.checkPetNeeds, 2000);
     }
@@ -685,14 +687,14 @@ class Stage extends React.Component {
     decayPetStats() {
         this.setState((prevState) => {
             const wastePresent = prevState.wasteItems.length > 0;
-            const cleanlinessDecay = wastePresent ? 10 : 2;
-            const newHunger = Math.min(100, prevState.hunger + 3); // Gets hungrier
+            const cleanlinessDecay = wastePresent ? 2 : 0.1; // Much slower in normal, still fast with waste
+            const newHunger = Math.min(100, prevState.hunger + 0.15); // Smooth hunger
             const newCleanliness = Math.max(
                 0,
                 prevState.cleanliness - cleanlinessDecay
-            ); // Gets dirtier faster if waste
-            const newHappiness = Math.max(0, prevState.happiness - 1); // Gets slightly sadder
-            const newEnergy = Math.max(0, prevState.energy - 1); // Gets slightly tired
+            );
+            const newHappiness = Math.max(0, prevState.happiness - 0.1);
+            const newEnergy = Math.max(0, prevState.energy - 0.1);
             return {
                 hunger: newHunger,
                 cleanliness: newCleanliness,
@@ -777,20 +779,23 @@ class Stage extends React.Component {
         this.collectFood(foodId);
     }
     spawnWaste() {
-        if (this.state.wasteItems.length < 5) {
-            // Limit waste items
+        // Only spawn if pet is enabled and energy >= 8
+        this.setState((prevState) => {
+            if (!prevState.petEnabled || prevState.energy < 8) return null;
             const waste = {
-                id: (Date.now() + Math.random()).toString(), // ensure string id
-                x: Math.random() * this.rect.width,
-                y: Math.random() * this.rect.height,
+                id: (Date.now() + Math.random()).toString(),
+                x: Math.random() * (this.rect ? this.rect.width : 480),
+                y: Math.random() * (this.rect ? this.rect.height : 360),
             };
-            this.setState((prevState) => ({
-                wasteItems: [...prevState.wasteItems, waste],
-            }));
-        }
+            return { wasteItems: [...prevState.wasteItems, waste] };
+        });
     }
     handleWasteClick(id) {
-        this.collectFood(id); // Collect waste as food
+        // Remove waste and cost 3 energy
+        this.setState((prevState) => ({
+            wasteItems: prevState.wasteItems.filter((w) => w.id !== id),
+            energy: Math.max(0, prevState.energy - 3),
+        }));
         this.handleCleanPet();
     }
     handleTogglePet() {

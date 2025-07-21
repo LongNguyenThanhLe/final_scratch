@@ -325,7 +325,7 @@ const StageComponent = (props) => {
                             {isSleeping && (
                                 <div className={styles.sleepOverlay}>
                                     <span role="img" aria-label="sleeping">
-                                        \ud83d\ude34
+                                        😴
                                     </span>{" "}
                                     Sleeping... Please wait
                                     <div className={styles.sleepCountdown}>

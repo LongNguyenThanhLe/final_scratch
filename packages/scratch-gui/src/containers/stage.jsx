@@ -82,6 +82,7 @@ class Stage extends React.Component {
             isSleeping: false,
             sleepCountdown: 0,
             petEnabled: true,
+            petSpriteName: this.getPetSpriteName(props),
         };
         if (this.props.vm.renderer) {
             this.renderer = this.props.vm.renderer;
@@ -102,11 +103,26 @@ class Stage extends React.Component {
         }
         this.props.vm.attachV2BitmapAdapter(new V2BitmapAdapter());
     }
+
+    // Helper to get the sprite name for the current editingTarget
+    getPetSpriteName(props) {
+        const { editingTarget, sprites } = props;
+        if (editingTarget && sprites && sprites[editingTarget]) {
+            return sprites[editingTarget].name;
+        }
+        return "Sprite1";
+    }
+
     componentDidMount() {
         this.attachRectEvents();
         this.attachMouseEvents(this.canvas);
         this.updateRect();
         this.props.vm.runtime.addListener("QUESTION", this.questionListener);
+        // Listen for pet play event from VM
+        this.props.vm.runtime.addListener(
+            "PET_PLAYED_WITH",
+            this.handlePetPlayedWith
+        );
         // Start food spawn interval every 20s
         this.foodSpawnInterval = setInterval(() => this.spawnFood(), 20000);
         // Start stat decay interval every 1s for smooth animation
@@ -154,6 +170,10 @@ class Stage extends React.Component {
         // this.checkPetNeeds();
         // this.decayPetStats();
         this.handleTargetsUpdate();
+        // Update petSpriteName if editingTarget changes
+        if (this.props.editingTarget !== prevProps.editingTarget) {
+            this.setState({ petSpriteName: this.getPetSpriteName(this.props) });
+        }
     }
     componentWillUnmount() {
         this.detachMouseEvents(this.canvas);
@@ -168,6 +188,10 @@ class Stage extends React.Component {
         clearTimeout(this.speechTimeout);
         clearTimeout(this.reactionTimeout);
         this.props.vm.runtime.removeListener("QUESTION", this.questionListener);
+        this.props.vm.runtime.removeListener(
+            "PET_PLAYED_WITH",
+            this.handlePetPlayedWith
+        );
     }
     questionListener(question) {
         this.setState({ question: question });
@@ -810,6 +834,38 @@ class Stage extends React.Component {
     clearPetIntervals() {
         clearInterval(this.petIntervalId);
     }
+    // Handler for pet play event from VM
+    handlePetPlayedWith = (target) => {
+        if (!this.state.petEnabled) return;
+        // Only increase happiness if the moved sprite matches the pet sprite name
+        if (
+            target &&
+            target.sprite &&
+            target.sprite.name === this.state.petSpriteName
+        ) {
+            this.setState((prevState) => ({
+                happiness: Math.min(100, prevState.happiness + 2),
+            }));
+        }
+    };
+    // Add handler to set pet by clicking a sprite
+    handleSpriteClick = (e) => {
+        const { x, y } = getEventXY(e);
+        this.updateRect();
+        const mousePosition = [x - this.rect.left, y - this.rect.top];
+        const drawableId = this.renderer.pick(
+            mousePosition[0],
+            mousePosition[1]
+        );
+        if (drawableId === null) return;
+        const targetId = this.props.vm.getTargetIdForDrawableId(drawableId);
+        if (targetId === null) return;
+        const target = this.props.vm.runtime.getTargetById(targetId);
+        if (target && target.sprite) {
+            console.log("Pet sprite set to:", target.sprite.name); // Debug log
+            this.setState({ petSpriteName: target.sprite.name });
+        }
+    };
     render() {
         const {
             vm, // eslint-disable-line no-unused-vars
@@ -852,6 +908,8 @@ class Stage extends React.Component {
                 onWasteClick={this.handleWasteClick}
                 anyModalVisible={anyModalVisible}
                 isStarted={this.props.isStarted}
+                // Attach sprite click handler to the stage wrapper
+                onStageClick={this.handleSpriteClick}
                 {...props}
             />
         );
@@ -879,6 +937,8 @@ const mapStateToProps = (state) => ({
         (key) => state.scratchGui.modals[key]
     ),
     isStarted: state.scratchGui.vmStatus.started,
+    editingTarget: state.scratchGui.targets.editingTarget,
+    sprites: state.scratchGui.targets.sprites,
 });
 
 const mapDispatchToProps = (dispatch) => ({

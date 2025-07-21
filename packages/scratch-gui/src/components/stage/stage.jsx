@@ -85,6 +85,7 @@ const StageComponent = (props) => {
                     [styles.withColorPicker]: !isFullScreen && isColorPicking,
                 })}
                 onDoubleClick={onDoubleClick}
+                onClick={props.onStageClick}
             >
                 <div
                     style={{

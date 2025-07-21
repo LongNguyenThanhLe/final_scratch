@@ -122,7 +122,7 @@ stage doesn't "spill" out from under its rounded corners. instead, shift these o
     display: flex;
     justify-content: center;
     align-items: center;
-    background: rgba(0,0,0,0.25);
+    background: rgba(0, 0, 0, 0.25);
     border-radius: 0.5rem;
     pointer-events: all;
     cursor: pointer;
@@ -131,7 +131,7 @@ stage doesn't "spill" out from under its rounded corners. instead, shift these o
 .green-flag-overlay {
     padding: 1rem;
     border-radius: 100%;
-    background: rgba(255,255,255,0.75);
+    background: rgba(255, 255, 255, 0.75);
     border: 3px solid $ui-white;
     display: flex;
     justify-content: center;
@@ -146,9 +146,217 @@ stage doesn't "spill" out from under its rounded corners. instead, shift these o
     object-fit: contain;
 }
 
-
-
 @keyframes flash {
-    0% { opacity: 1; }
-    100% { opacity: 0; }
+    0% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+/* --- Virtual Pet Feature Styles --- */
+.foodItem {
+    font-size: 2rem;
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+    transition: all 0.2s ease;
+    user-select: none;
+}
+.foodItem:hover {
+    transform: translate(-50%, -50%) scale(1.2);
+    filter: drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.4));
+}
+.foodEmoji {
+    display: block;
+    animation: foodBounce 2s ease-in-out infinite;
+}
+@keyframes foodBounce {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}
+.foodFading {
+    opacity: 0;
+    transition: opacity 0.5s;
+}
+.petButtonRow {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    transform: none;
+    display: flex;
+    gap: 1.5rem;
+    z-index: 10;
+    pointer-events: auto;
+    background: #fff;
+    border-radius: 0 0 0 0;
+    padding: 0.5rem 0;
+    box-shadow: none;
+    align-items: center;
+    justify-content: center;
+}
+.petButtonRow > button {
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+.petButtonRow > button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.petButtonRow > button:active {
+    transform: translateY(0px);
+    transition: transform 0.1s ease;
+}
+.petButtonRow > button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+.petButtonRow > button:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+.petStatusRow {
+    position: absolute;
+    top: 0.4rem;
+    right: 0.4rem;
+    display: flex;
+    flex-direction: row;
+    gap: 0.7rem;
+    background: #fff;
+    border-radius: 0.7rem;
+    padding: 0.3rem 0.7rem 0.3rem 0.7rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    z-index: 12;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07);
+    min-width: 0;
+    align-items: center;
+}
+.petMetric {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 48px;
+    margin-right: 0.1rem;
+}
+.metricLabel {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #3a4252;
+    margin-bottom: 0.12rem;
+    letter-spacing: 0.01em;
+}
+.metricBarWrapper {
+    width: 100%;
+    height: 7px;
+    background: #e8eef6;
+    border-radius: 4px;
+    overflow: hidden;
+    border: none;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+.metricBar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s cubic-bezier(0.4, 2, 0.6, 1), background-color 0.3s;
+    min-width: 3px;
+}
+.petReactionMessage {
+    position: absolute;
+    top: 4.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 200, 0.95);
+    border-radius: 1.2rem;
+    padding: 0.7rem 2rem;
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #b8860b;
+    z-index: 15;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    opacity: 1;
+    animation: petReactionFade 1.5s linear forwards;
+}
+@keyframes petReactionFade {
+    0% {
+        opacity: 1;
+    }
+    80% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+.petSpeechBubble {
+    position: absolute;
+    background: #fff;
+    border: 2px solid #333;
+    border-radius: 15px;
+    padding: 0.3rem 0.7rem;
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #333;
+    z-index: 20;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-width: 140px;
+    text-align: center;
+    animation: speechBubblePop 0.3s ease-out;
+}
+@keyframes speechBubblePop {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+.wasteItem {
+    font-size: 2.2rem;
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.25));
+    user-select: none;
+    transition: opacity 0.5s, transform 0.2s;
+    opacity: 1;
+    pointer-events: auto;
+}
+.wasteItem:hover {
+    transform: translate(-50%, -50%) scale(1.15) rotate(-10deg);
+    filter: drop-shadow(3px 3px 8px rgba(0, 0, 0, 0.35));
+}
+.wasteFading {
+    opacity: 0;
+}
+.sleepOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: #fff;
+    font-weight: bold;
+    pointer-events: all;
+    text-shadow: 0 2px 8px #000;
+}
+.sleepCountdown {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-top: 1rem;
+    color: #ffe082;
+    text-shadow: 0 2px 8px #000;
 }

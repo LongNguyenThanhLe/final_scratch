@@ -1,46 +1,63 @@
-import bindAll from 'lodash.bindall';
-import PropTypes from 'prop-types';
-import React from 'react';
-import Renderer from '@scratch/scratch-render';
-import VM from '@scratch/scratch-vm';
-import {connect} from 'react-redux';
+import bindAll from "lodash.bindall";
+import PropTypes from "prop-types";
+import React from "react";
+import Renderer from "@scratch/scratch-render";
+import VM from "@scratch/scratch-vm";
+import { connect } from "react-redux";
 
-import {STAGE_DISPLAY_SIZES} from '../lib/layout-constants';
-import {getEventXY} from '../lib/touch-utils';
-import VideoProvider from '../lib/video/video-provider';
-import {BitmapAdapter as V2BitmapAdapter} from '@scratch/scratch-svg-renderer';
+import { STAGE_DISPLAY_SIZES } from "../lib/layout-constants";
+import { getEventXY } from "../lib/touch-utils";
+import VideoProvider from "../lib/video/video-provider";
+import { BitmapAdapter as V2BitmapAdapter } from "@scratch/scratch-svg-renderer";
 
-import StageComponent from '../components/stage/stage.jsx';
+import StageComponent from "../components/stage/stage.jsx";
 
 import {
     activateColorPicker,
-    deactivateColorPicker
-} from '../reducers/color-picker';
+    deactivateColorPicker,
+} from "../reducers/color-picker";
 
 const colorPickerRadius = 20;
 const dragThreshold = 3; // Same as the block drag threshold
 
 class Stage extends React.Component {
-    constructor (props) {
+    constructor(props) {
         super(props);
         bindAll(this, [
-            'attachMouseEvents',
-            'cancelMouseDownTimeout',
-            'detachMouseEvents',
-            'handleDoubleClick',
-            'handleQuestionAnswered',
-            'onMouseUp',
-            'onMouseMove',
-            'onMouseDown',
-            'onStartDrag',
-            'onStopDrag',
-            'onWheel',
-            'updateRect',
-            'questionListener',
-            'setDragCanvas',
-            'clearDragCanvas',
-            'drawDragCanvas',
-            'positionDragCanvas'
+            "attachMouseEvents",
+            "cancelMouseDownTimeout",
+            "detachMouseEvents",
+            "handleDoubleClick",
+            "handleQuestionAnswered",
+            "onMouseUp",
+            "onMouseMove",
+            "onMouseDown",
+            "onStartDrag",
+            "onStopDrag",
+            "onWheel",
+            "updateRect",
+            "questionListener",
+            "setDragCanvas",
+            "clearDragCanvas",
+            "drawDragCanvas",
+            "positionDragCanvas",
+            "handleFeedPet",
+            "handlePlayWithPet",
+            "handleCleanPet",
+            "handleSleepPet",
+            "clearPetReactionMessage",
+            "checkPetNeeds",
+            "clearPetSpeech",
+            "decayPetStats",
+            "handleTargetsUpdate",
+            "spawnFood",
+            "collectFood",
+            "handleFoodClick",
+            "spawnWaste",
+            "handleWasteClick",
+            "handleTogglePet",
+            "startPetIntervals",
+            "clearPetIntervals",
         ]);
         this.state = {
             mouseDownTimeoutId: null,
@@ -49,13 +66,29 @@ class Stage extends React.Component {
             dragOffset: null,
             dragId: null,
             colorInfo: null,
-            question: null
+            question: null,
+            hunger: 50, // 0 = full, 100 = starving
+            cleanliness: 100, // 0 = dirty, 100 = clean
+            happiness: 50, // 0 = sad, 100 = very happy
+            energy: 100, // 0 = tired, 100 = fully rested
+            petReactionMessage: null,
+            petSpeechMessage: null,
+            petSpeechVisible: false,
+            petX: 0,
+            petY: 0,
+            foodItems: [],
+            collectedFood: 0,
+            wasteItems: [],
+            isSleeping: false,
+            sleepCountdown: 0,
+            petEnabled: true,
+            petSpriteName: this.getPetSpriteName(props),
         };
         if (this.props.vm.renderer) {
             this.renderer = this.props.vm.renderer;
             this.canvas = this.renderer.canvas;
         } else {
-            this.canvas = document.createElement('canvas');
+            this.canvas = document.createElement("canvas");
             this.renderer = new Renderer(this.canvas);
             this.props.vm.attachRenderer(this.renderer);
 
@@ -70,22 +103,62 @@ class Stage extends React.Component {
         }
         this.props.vm.attachV2BitmapAdapter(new V2BitmapAdapter());
     }
-    componentDidMount () {
+
+    // Helper to get the sprite name for the current editingTarget
+    getPetSpriteName(props) {
+        const { editingTarget, sprites } = props;
+        if (editingTarget && sprites && sprites[editingTarget]) {
+            return sprites[editingTarget].name;
+        }
+        return "Sprite1";
+    }
+
+    componentDidMount() {
         this.attachRectEvents();
         this.attachMouseEvents(this.canvas);
         this.updateRect();
-        this.props.vm.runtime.addListener('QUESTION', this.questionListener);
+        this.props.vm.runtime.addListener("QUESTION", this.questionListener);
+        // Listen for pet play event from VM
+        this.props.vm.runtime.addListener(
+            "PET_PLAYED_WITH",
+            this.handlePetPlayedWith
+        );
+        // Start food spawn interval every 20s
+        this.foodSpawnInterval = setInterval(() => this.spawnFood(), 20000);
+        // Start stat decay interval every 1s for smooth animation
+        this.statDecayInterval = setInterval(() => this.decayPetStats(), 1000);
+        // Start waste spawn interval every 3 minutes
+        this.wasteSpawnInterval = setInterval(() => this.spawnWaste(), 180000);
+        this.startPetIntervals();
+        this.petNeedsInterval = setInterval(this.checkPetNeeds, 2000);
     }
-    shouldComponentUpdate (nextProps, nextState) {
-        return this.props.stageSize !== nextProps.stageSize ||
+    shouldComponentUpdate(nextProps, nextState) {
+        return (
+            this.props.stageSize !== nextProps.stageSize ||
             this.props.isColorPicking !== nextProps.isColorPicking ||
             this.state.colorInfo !== nextState.colorInfo ||
             this.props.isFullScreen !== nextProps.isFullScreen ||
             this.state.question !== nextState.question ||
             this.props.micIndicator !== nextProps.micIndicator ||
-            this.props.isStarted !== nextProps.isStarted;
+            this.props.isStarted !== nextProps.isStarted ||
+            this.state.hunger !== nextState.hunger ||
+            this.state.cleanliness !== nextState.cleanliness ||
+            this.state.happiness !== nextState.happiness ||
+            this.state.energy !== nextState.energy ||
+            this.state.petReactionMessage !== nextState.petReactionMessage ||
+            this.state.petSpeechMessage !== nextState.petSpeechMessage ||
+            this.state.petSpeechVisible !== nextState.petSpeechVisible ||
+            this.state.petX !== nextState.petX ||
+            this.state.petY !== nextState.petY ||
+            this.state.foodItems !== nextState.foodItems ||
+            this.state.collectedFood !== nextState.collectedFood ||
+            this.state.wasteItems !== nextState.wasteItems ||
+            this.state.isSleeping !== nextState.isSleeping ||
+            this.state.sleepCountdown !== nextState.sleepCountdown ||
+            this.state.petEnabled !== nextState.petEnabled
+        );
     }
-    componentDidUpdate (prevProps) {
+    componentDidUpdate(prevProps) {
         if (this.props.isColorPicking && !prevProps.isColorPicking) {
             this.startColorPickingLoop();
         } else if (!this.props.isColorPicking && prevProps.isColorPicking) {
@@ -93,86 +166,111 @@ class Stage extends React.Component {
         }
         this.updateRect();
         this.renderer.resize(this.rect.width, this.rect.height);
+        // Removed to prevent infinite update loop:
+        // this.checkPetNeeds();
+        // this.decayPetStats();
+        this.handleTargetsUpdate();
+        // Update petSpriteName if editingTarget changes
+        if (this.props.editingTarget !== prevProps.editingTarget) {
+            this.setState({ petSpriteName: this.getPetSpriteName(this.props) });
+        }
     }
-    componentWillUnmount () {
+    componentWillUnmount() {
         this.detachMouseEvents(this.canvas);
         this.detachRectEvents();
         this.stopColorPickingLoop();
-        this.props.vm.runtime.removeListener('QUESTION', this.questionListener);
+        this.clearPetIntervals();
+        clearInterval(this.foodSpawnInterval);
+        clearInterval(this.statDecayInterval);
+        clearInterval(this.petNeedsInterval);
+        clearInterval(this.wasteSpawnInterval);
+        clearInterval(this.sleepInterval);
+        clearTimeout(this.speechTimeout);
+        clearTimeout(this.reactionTimeout);
+        this.props.vm.runtime.removeListener("QUESTION", this.questionListener);
+        this.props.vm.runtime.removeListener(
+            "PET_PLAYED_WITH",
+            this.handlePetPlayedWith
+        );
     }
-    questionListener (question) {
-        this.setState({question: question});
+    questionListener(question) {
+        this.setState({ question: question });
     }
-    handleQuestionAnswered (answer) {
-        this.setState({question: null}, () => {
-            this.props.vm.runtime.emit('ANSWER', answer);
+    handleQuestionAnswered(answer) {
+        this.setState({ question: null }, () => {
+            this.props.vm.runtime.emit("ANSWER", answer);
         });
     }
-    startColorPickingLoop () {
+    startColorPickingLoop() {
         this.intervalId = setInterval(() => {
-            if (typeof this.pickX === 'number') {
-                this.setState({colorInfo: this.getColorInfo(this.pickX, this.pickY)});
+            if (typeof this.pickX === "number") {
+                this.setState({
+                    colorInfo: this.getColorInfo(this.pickX, this.pickY),
+                });
             }
         }, 30);
     }
-    stopColorPickingLoop () {
+    stopColorPickingLoop() {
         clearInterval(this.intervalId);
     }
-    attachMouseEvents (canvas) {
-        document.addEventListener('mousemove', this.onMouseMove);
-        document.addEventListener('mouseup', this.onMouseUp);
-        document.addEventListener('touchmove', this.onMouseMove);
-        document.addEventListener('touchend', this.onMouseUp);
-        canvas.addEventListener('mousedown', this.onMouseDown);
-        canvas.addEventListener('touchstart', this.onMouseDown);
-        canvas.addEventListener('wheel', this.onWheel);
+    attachMouseEvents(canvas) {
+        document.addEventListener("mousemove", this.onMouseMove);
+        document.addEventListener("mouseup", this.onMouseUp);
+        document.addEventListener("touchmove", this.onMouseMove);
+        document.addEventListener("touchend", this.onMouseUp);
+        canvas.addEventListener("mousedown", this.onMouseDown);
+        canvas.addEventListener("touchstart", this.onMouseDown);
+        canvas.addEventListener("wheel", this.onWheel);
     }
-    detachMouseEvents (canvas) {
-        document.removeEventListener('mousemove', this.onMouseMove);
-        document.removeEventListener('mouseup', this.onMouseUp);
-        document.removeEventListener('touchmove', this.onMouseMove);
-        document.removeEventListener('touchend', this.onMouseUp);
-        canvas.removeEventListener('mousedown', this.onMouseDown);
-        canvas.removeEventListener('touchstart', this.onMouseDown);
-        canvas.removeEventListener('wheel', this.onWheel);
+    detachMouseEvents(canvas) {
+        document.removeEventListener("mousemove", this.onMouseMove);
+        document.removeEventListener("mouseup", this.onMouseUp);
+        document.removeEventListener("touchmove", this.onMouseMove);
+        document.removeEventListener("touchend", this.onMouseUp);
+        canvas.removeEventListener("mousedown", this.onMouseDown);
+        canvas.removeEventListener("touchstart", this.onMouseDown);
+        canvas.removeEventListener("wheel", this.onWheel);
     }
-    attachRectEvents () {
-        window.addEventListener('resize', this.updateRect);
-        window.addEventListener('scroll', this.updateRect);
+    attachRectEvents() {
+        window.addEventListener("resize", this.updateRect);
+        window.addEventListener("scroll", this.updateRect);
     }
-    detachRectEvents () {
-        window.removeEventListener('resize', this.updateRect);
-        window.removeEventListener('scroll', this.updateRect);
+    detachRectEvents() {
+        window.removeEventListener("resize", this.updateRect);
+        window.removeEventListener("scroll", this.updateRect);
     }
-    updateRect () {
+    updateRect() {
         this.rect = this.canvas.getBoundingClientRect();
     }
-    getScratchCoords (x, y) {
+    getScratchCoords(x, y) {
         const nativeSize = this.renderer.getNativeSize();
         return [
-            (nativeSize[0] / this.rect.width) * (x - (this.rect.width / 2)),
-            (nativeSize[1] / this.rect.height) * (y - (this.rect.height / 2))
+            (nativeSize[0] / this.rect.width) * (x - this.rect.width / 2),
+            (nativeSize[1] / this.rect.height) * (y - this.rect.height / 2),
         ];
     }
-    getColorInfo (x, y) {
+    getColorInfo(x, y) {
         return {
             x: x,
             y: y,
-            ...this.renderer.extractColor(x, y, colorPickerRadius)
+            ...this.renderer.extractColor(x, y, colorPickerRadius),
         };
     }
-    handleDoubleClick (e) {
-        const {x, y} = getEventXY(e);
+    handleDoubleClick(e) {
+        const { x, y } = getEventXY(e);
         // Set editing target from cursor position, if clicking on a sprite.
         const mousePosition = [x - this.rect.left, y - this.rect.top];
-        const drawableId = this.renderer.pick(mousePosition[0], mousePosition[1]);
+        const drawableId = this.renderer.pick(
+            mousePosition[0],
+            mousePosition[1]
+        );
         if (drawableId === null) return;
         const targetId = this.props.vm.getTargetIdForDrawableId(drawableId);
         if (targetId === null) return;
         this.props.vm.setEditingTarget(targetId);
     }
-    onMouseMove (e) {
-        const {x, y} = getEventXY(e);
+    onMouseMove(e) {
+        const { x, y } = getEventXY(e);
         const mousePosition = [x - this.rect.left, y - this.rect.top];
 
         if (this.props.isColorPicking) {
@@ -183,8 +281,14 @@ class Stage extends React.Component {
 
         if (this.state.mouseDown && !this.state.isDragging) {
             const distanceFromMouseDown = Math.sqrt(
-                Math.pow(mousePosition[0] - this.state.mouseDownPosition[0], 2) +
-                Math.pow(mousePosition[1] - this.state.mouseDownPosition[1], 2)
+                Math.pow(
+                    mousePosition[0] - this.state.mouseDownPosition[0],
+                    2
+                ) +
+                    Math.pow(
+                        mousePosition[1] - this.state.mouseDownPosition[1],
+                        2
+                    )
             );
             if (distanceFromMouseDown > dragThreshold) {
                 this.cancelMouseDownTimeout();
@@ -197,11 +301,14 @@ class Stage extends React.Component {
             if (this.props.useEditorDragStyle) {
                 this.positionDragCanvas(mousePosition[0], mousePosition[1]);
             } else {
-                const spritePosition = this.getScratchCoords(mousePosition[0], mousePosition[1]);
+                const spritePosition = this.getScratchCoords(
+                    mousePosition[0],
+                    mousePosition[1]
+                );
                 this.props.vm.postSpriteInfo({
                     x: spritePosition[0] + this.state.dragOffset[0],
                     y: -(spritePosition[1] + this.state.dragOffset[1]),
-                    force: true
+                    force: true,
                 });
             }
         }
@@ -209,17 +316,17 @@ class Stage extends React.Component {
             x: mousePosition[0],
             y: mousePosition[1],
             canvasWidth: this.rect.width,
-            canvasHeight: this.rect.height
+            canvasHeight: this.rect.height,
         };
-        this.props.vm.postIOData('mouse', coordinates);
+        this.props.vm.postIOData("mouse", coordinates);
     }
-    onMouseUp (e) {
-        const {x, y} = getEventXY(e);
+    onMouseUp(e) {
+        const { x, y } = getEventXY(e);
         const mousePosition = [x - this.rect.left, y - this.rect.top];
         this.cancelMouseDownTimeout();
         this.setState({
             mouseDown: false,
-            mouseDownPosition: null
+            mouseDownPosition: null,
         });
         const data = {
             isDown: false,
@@ -227,48 +334,62 @@ class Stage extends React.Component {
             y: y - this.rect.top,
             canvasWidth: this.rect.width,
             canvasHeight: this.rect.height,
-            wasDragged: this.state.isDragging
+            wasDragged: this.state.isDragging,
         };
         if (this.state.isDragging) {
             this.onStopDrag(mousePosition[0], mousePosition[1]);
         }
-        this.props.vm.postIOData('mouse', data);
+        this.props.vm.postIOData("mouse", data);
 
-        if (this.props.isColorPicking &&
-            mousePosition[0] > 0 && mousePosition[0] < this.rect.width &&
-            mousePosition[1] > 0 && mousePosition[1] < this.rect.height
+        if (
+            this.props.isColorPicking &&
+            mousePosition[0] > 0 &&
+            mousePosition[0] < this.rect.width &&
+            mousePosition[1] > 0 &&
+            mousePosition[1] < this.rect.height
         ) {
-            const {r, g, b} = this.state.colorInfo.color;
-            const componentToString = c => {
+            const { r, g, b } = this.state.colorInfo.color;
+            const componentToString = (c) => {
                 const hex = c.toString(16);
                 return hex.length === 1 ? `0${hex}` : hex;
             };
-            const colorString = `#${componentToString(r)}${componentToString(g)}${componentToString(b)}`;
+            const colorString = `#${componentToString(r)}${componentToString(
+                g
+            )}${componentToString(b)}`;
             this.props.onDeactivateColorPicker(colorString);
-            this.setState({colorInfo: null});
+            this.setState({ colorInfo: null });
             this.pickX = null;
             this.pickY = null;
         }
     }
-    onMouseDown (e) {
+    onMouseDown(e) {
         this.updateRect();
-        const {x, y} = getEventXY(e);
+        const { x, y } = getEventXY(e);
         const mousePosition = [x - this.rect.left, y - this.rect.top];
         if (this.props.isColorPicking) {
             // Set the pickX/Y for the color picker loop to pick up
             this.pickX = mousePosition[0];
             this.pickY = mousePosition[1];
             // Immediately update the color picker info
-            this.setState({colorInfo: this.getColorInfo(this.pickX, this.pickY)});
+            this.setState({
+                colorInfo: this.getColorInfo(this.pickX, this.pickY),
+            });
         } else {
-            if (e.button === 0 || (window.TouchEvent && e instanceof TouchEvent)) {
+            if (
+                e.button === 0 ||
+                (window.TouchEvent && e instanceof TouchEvent)
+            ) {
                 this.setState({
                     mouseDown: true,
                     mouseDownPosition: mousePosition,
                     mouseDownTimeoutId: setTimeout(
-                        this.onStartDrag.bind(this, mousePosition[0], mousePosition[1]),
+                        this.onStartDrag.bind(
+                            this,
+                            mousePosition[0],
+                            mousePosition[1]
+                        ),
                         400
-                    )
+                    ),
                 });
             }
             const data = {
@@ -276,9 +397,9 @@ class Stage extends React.Component {
                 x: mousePosition[0],
                 y: mousePosition[1],
                 canvasWidth: this.rect.width,
-                canvasHeight: this.rect.height
+                canvasHeight: this.rect.height,
             };
-            this.props.vm.postIOData('mouse', data);
+            this.props.vm.postIOData("mouse", data);
             if (e.preventDefault) {
                 // Prevent default to prevent touch from dragging page
                 e.preventDefault();
@@ -289,18 +410,18 @@ class Stage extends React.Component {
             }
         }
     }
-    onWheel (e) {
+    onWheel(e) {
         const data = {
             deltaX: e.deltaX,
-            deltaY: e.deltaY
+            deltaY: e.deltaY,
         };
-        this.props.vm.postIOData('mouseWheel', data);
+        this.props.vm.postIOData("mouseWheel", data);
     }
-    cancelMouseDownTimeout () {
+    cancelMouseDownTimeout() {
         if (this.state.mouseDownTimeoutId !== null) {
             clearTimeout(this.state.mouseDownTimeoutId);
         }
-        this.setState({mouseDownTimeoutId: null});
+        this.setState({ mouseDownTimeoutId: null });
     }
     /**
      * Initialize the position of the "dragged sprite" canvas
@@ -308,13 +429,13 @@ class Stage extends React.Component {
      * @param {number} x The x position of the initial drag event
      * @param {number} y The y position of the initial drag event
      */
-    drawDragCanvas (drawableData, x, y) {
+    drawDragCanvas(drawableData, x, y) {
         const {
             imageData,
             x: boundsX,
             y: boundsY,
             width: boundsWidth,
-            height: boundsHeight
+            height: boundsHeight,
         } = drawableData;
         this.dragCanvas.width = imageData.width;
         this.dragCanvas.height = imageData.height;
@@ -322,23 +443,23 @@ class Stage extends React.Component {
         this.dragCanvas.style.width = `${boundsWidth}px`;
         this.dragCanvas.style.height = `${boundsHeight}px`;
 
-        this.dragCanvas.getContext('2d').putImageData(imageData, 0, 0);
+        this.dragCanvas.getContext("2d").putImageData(imageData, 0, 0);
         // Position so that pick location is at (0, 0) so that  positionDragCanvas()
         // can use translation to move to mouse position smoothly.
         this.dragCanvas.style.left = `${boundsX - x}px`;
         this.dragCanvas.style.top = `${boundsY - y}px`;
-        this.dragCanvas.style.display = 'block';
+        this.dragCanvas.style.display = "block";
     }
-    clearDragCanvas () {
+    clearDragCanvas() {
         this.dragCanvas.width = this.dragCanvas.height = 0;
-        this.dragCanvas.style.display = 'none';
+        this.dragCanvas.style.display = "none";
     }
-    positionDragCanvas (mouseX, mouseY) {
+    positionDragCanvas(mouseX, mouseY) {
         // mouseX/Y are relative to stage top/left, and dragCanvas is already
         // positioned so that the pick location is at (0,0).
         this.dragCanvas.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
     }
-    onStartDrag (x, y) {
+    onStartDrag(x, y) {
         if (this.state.dragId) return;
         const drawableId = this.renderer.pick(x, y);
         if (drawableId === null) return;
@@ -361,33 +482,38 @@ class Stage extends React.Component {
         this.setState({
             isDragging: true,
             dragId: targetId,
-            dragOffset: [offsetX, offsetY]
+            dragOffset: [offsetX, offsetY],
         });
         if (this.props.useEditorDragStyle) {
             // Extract the drawable art
-            const drawableData = this.renderer.extractDrawableScreenSpace(drawableId);
+            const drawableData =
+                this.renderer.extractDrawableScreenSpace(drawableId);
             this.drawDragCanvas(drawableData, x, y);
             this.positionDragCanvas(x, y);
-            this.props.vm.postSpriteInfo({visible: false});
+            this.props.vm.postSpriteInfo({ visible: false });
             this.props.vm.renderer.draw();
         }
     }
-    onStopDrag (mouseX, mouseY) {
+    onStopDrag(mouseX, mouseY) {
         const dragId = this.state.dragId;
         const commonStopDragActions = () => {
             this.props.vm.stopDrag(dragId);
             this.setState({
                 isDragging: false,
                 dragOffset: null,
-                dragId: null
+                dragId: null,
             });
         };
         if (this.props.useEditorDragStyle) {
             // Need to sequence these actions to prevent flickering.
-            const spriteInfo = {visible: true};
+            const spriteInfo = { visible: true };
             // First update the sprite position if dropped in the stage.
-            if (mouseX > 0 && mouseX < this.rect.width &&
-                mouseY > 0 && mouseY < this.rect.height) {
+            if (
+                mouseX > 0 &&
+                mouseX < this.rect.width &&
+                mouseY > 0 &&
+                mouseY < this.rect.height
+            ) {
                 const spritePosition = this.getScratchCoords(mouseX, mouseY);
                 spriteInfo.x = spritePosition[0] + this.state.dragOffset[0];
                 spriteInfo.y = -(spritePosition[1] + this.state.dragOffset[1]);
@@ -402,13 +528,349 @@ class Stage extends React.Component {
             commonStopDragActions();
         }
     }
-    setDragCanvas (canvas) {
+    setDragCanvas(canvas) {
         this.dragCanvas = canvas;
     }
-    render () {
+    // REPLACE ALL PET LOGIC BELOW WITH THE LOGIC FROM scratch-gui/src/containers/stage.jsx
+    // This includes:
+    // - state initialization (hunger, cleanliness, happiness, energy, etc.)
+    // - all pet action handlers (handleFeedPet, handlePlayWithPet, handleCleanPet, handleSleepPet, etc.)
+    // - stat decay and intervals (startPetIntervals, clearPetIntervals, decayPetStats, etc.)
+    // - food/waste logic (spawnFood, collectFood, handleFoodClick, spawnWaste, handleWasteClick, etc.)
+    // - prop passing to StageComponent
+    handleFeedPet() {
+        if (this.state.isSleeping) return;
+        if (this.state.collectedFood <= 0) {
+            this.setState({
+                petReactionMessage:
+                    "No food collected! Find food in the field first! 🍽️",
+            });
+            clearTimeout(this.reactionTimeout);
+            this.reactionTimeout = setTimeout(
+                this.clearPetReactionMessage,
+                1500
+            );
+            return;
+        }
+        this.setState(
+            (prevState) => ({
+                hunger: Math.max(0, prevState.hunger - 20),
+                cleanliness: Math.max(0, prevState.cleanliness - 5),
+                collectedFood: prevState.collectedFood - 1,
+                petReactionMessage: "Yum! Thank you! 😋",
+            }),
+            () => {
+                clearTimeout(this.reactionTimeout);
+                this.reactionTimeout = setTimeout(
+                    this.clearPetReactionMessage,
+                    1500
+                );
+            }
+        );
+    }
+    handlePlayWithPet() {
+        if (this.state.isSleeping) return;
+        if (this.state.hunger > 80) {
+            this.setState({
+                petSpeechMessage:
+                    "I'm too hungry to play! Please feed me first! 😫",
+                petSpeechVisible: true,
+            });
+            clearTimeout(this.speechTimeout);
+            this.speechTimeout = setTimeout(this.clearPetSpeech, 2000);
+            return;
+        }
+        if (this.state.energy < 10) {
+            this.setState({
+                petSpeechMessage:
+                    "I’m too tired! Let me sleep to get my energy back! 😴",
+                petSpeechVisible: true,
+            });
+            clearTimeout(this.speechTimeout);
+            this.speechTimeout = setTimeout(this.clearPetSpeech, 2000);
+            return;
+        }
+        this.setState(
+            (prevState) => ({
+                happiness: Math.min(100, prevState.happiness + 20),
+                hunger: Math.min(100, prevState.hunger + 5),
+                energy: Math.max(0, prevState.energy - 10),
+                cleanliness: Math.max(0, prevState.cleanliness - 10),
+                petReactionMessage: "Yay! That was fun! 😺🎉",
+            }),
+            () => {
+                clearTimeout(this.reactionTimeout);
+                this.reactionTimeout = setTimeout(
+                    this.clearPetReactionMessage,
+                    1500
+                );
+            }
+        );
+    }
+    handleCleanPet() {
+        if (this.state.isSleeping) return;
+        if (this.state.energy < 10) {
+            this.setState({
+                petSpeechMessage:
+                    "I’m too tired! Let me sleep to get my energy back! 😴",
+                petSpeechVisible: true,
+            });
+            clearTimeout(this.speechTimeout);
+            this.speechTimeout = setTimeout(this.clearPetSpeech, 2000);
+            return;
+        }
+        this.setState(
+            (prevState) => ({
+                cleanliness: Math.min(100, prevState.cleanliness + 10),
+                energy: Math.max(0, prevState.energy - 10),
+                petReactionMessage: "So fresh! 🛁✨",
+            }),
+            () => {
+                clearTimeout(this.reactionTimeout);
+                this.reactionTimeout = setTimeout(
+                    this.clearPetReactionMessage,
+                    1500
+                );
+            }
+        );
+    }
+    handleSleepPet() {
+        if (this.state.isSleeping) return;
+        this.setState(
+            (prevState) => ({
+                isSleeping: true,
+                sleepCountdown: 30,
+                hunger: Math.max(0, prevState.hunger - 5),
+                petReactionMessage: "Zzz... 😴",
+            }),
+            () => {
+                clearTimeout(this.reactionTimeout);
+                this.reactionTimeout = setTimeout(
+                    this.clearPetReactionMessage,
+                    1500
+                );
+                clearInterval(this.sleepInterval);
+                this.sleepInterval = setInterval(() => {
+                    this.setState((prevState) => {
+                        if (prevState.sleepCountdown <= 1) {
+                            clearInterval(this.sleepInterval);
+                            return {
+                                isSleeping: false,
+                                sleepCountdown: 0,
+                                energy: 100,
+                            };
+                        }
+                        return {
+                            sleepCountdown: prevState.sleepCountdown - 1,
+                            energy: Math.min(100, prevState.energy + 4),
+                        };
+                    });
+                }, 1000);
+            }
+        );
+    }
+    clearPetReactionMessage() {
+        clearTimeout(this.reactionTimeout);
+        this.setState({ petReactionMessage: null });
+    }
+    checkPetNeeds() {
+        const { hunger, cleanliness, happiness, energy } = this.state;
+        let message = "";
+        let shouldShow = false;
+
+        if (hunger > 70) {
+            message = "I'm starving! 🍽️";
+            shouldShow = true;
+        } else if (cleanliness < 30) {
+            message = "I feel so dirty! 🛁";
+            shouldShow = true;
+        } else if (happiness < 40) {
+            message = "I'm so sad... 😢";
+            shouldShow = true;
+        } else if (energy < 20) {
+            message = "I'm so tired... 😴";
+            shouldShow = true;
+        }
+
+        if (shouldShow && !this.state.petSpeechVisible) {
+            this.setState({
+                petSpeechMessage: message,
+                petSpeechVisible: true,
+            });
+            // Clear speech after 3 seconds
+            clearTimeout(this.speechTimeout);
+            this.speechTimeout = setTimeout(this.clearPetSpeech, 3000);
+        }
+    }
+    clearPetSpeech() {
+        this.setState({
+            petSpeechVisible: false,
+            petSpeechMessage: "",
+        });
+    }
+    decayPetStats() {
+        this.setState((prevState) => {
+            const wastePresent = prevState.wasteItems.length > 0;
+            const cleanlinessDecay = wastePresent ? 2 : 0.1; // Much slower in normal, still fast with waste
+            const newHunger = Math.min(100, prevState.hunger + 0.15); // Smooth hunger
+            const newCleanliness = Math.max(
+                0,
+                prevState.cleanliness - cleanlinessDecay
+            );
+            const newHappiness = Math.max(0, prevState.happiness - 0.1);
+            const newEnergy = Math.max(0, prevState.energy - 0.1);
+            return {
+                hunger: newHunger,
+                cleanliness: newCleanliness,
+                happiness: newHappiness,
+                energy: newEnergy,
+            };
+        });
+    }
+    handleTargetsUpdate() {
+        // This is a placeholder for the pet's position update.
+        // In a real VM, this would involve extracting the pet's position
+        // from the VM's state and updating this.state.petX/Y.
+        // For now, we'll just update the pet's position on the canvas.
+        // This requires the pet sprite to be a drawable and its position
+        // to be managed by the VM's state.
+        // Example: const petDrawableId = this.props.vm.runtime.getTargetById('pet').drawableId;
+        // const petPosition = this.props.vm.runtime.getTargetById('pet').x;
+        // this.setState({ petX: petPosition, petY: 0 }); // Assuming petY is 0 for now
+    }
+    spawnFood() {
+        this.setState((prevState) => {
+            if (prevState.foodItems.length >= 5) return prevState;
+            const stageWidth = this.rect ? this.rect.width : 480;
+            const stageHeight = this.rect ? this.rect.height : 360;
+            const newFood = {
+                id: (Date.now() + Math.random()).toString(), // ensure string id
+                x: Math.random() * (stageWidth - 40) + 20,
+                y: Math.random() * (stageHeight - 40) + 20,
+                type: Math.floor(Math.random() * 3), // 0: apple, 1: bone, 2: fish
+                collected: false,
+                fading: false,
+            };
+            // Remove food after 5 seconds if not collected
+            setTimeout(() => {
+                this.setState((prevState2) => {
+                    const food = prevState2.foodItems.find(
+                        (f) => f.id === newFood.id
+                    );
+                    if (food && !food.collected) {
+                        const updatedFoodItems = prevState2.foodItems.map((f) =>
+                            f.id === newFood.id ? { ...f, fading: true } : f
+                        );
+                        // Remove after fade animation (0.5s)
+                        setTimeout(() => {
+                            this.setState((prevState3) => ({
+                                foodItems: prevState3.foodItems.filter(
+                                    (f) => f.id !== newFood.id
+                                ),
+                            }));
+                        }, 500);
+                        return { foodItems: updatedFoodItems };
+                    }
+                    return null;
+                });
+            }, 5000);
+            return {
+                foodItems: [...prevState.foodItems, newFood],
+            };
+        });
+    }
+    collectFood(foodId) {
+        this.setState((prevState) => {
+            const updatedFoodItems = prevState.foodItems.map((food) =>
+                food.id === foodId ? { ...food, collected: true } : food
+            );
+            // Remove collected food after a short delay
+            setTimeout(() => {
+                this.setState((prevState2) => ({
+                    foodItems: prevState2.foodItems.filter(
+                        (food) => food.id !== foodId
+                    ),
+                    collectedFood: prevState2.collectedFood + 1,
+                }));
+            }, 300);
+            return {
+                foodItems: updatedFoodItems,
+            };
+        });
+    }
+    handleFoodClick(foodId) {
+        if (this.state.isSleeping) return;
+        this.collectFood(foodId);
+    }
+    spawnWaste() {
+        // Only spawn if pet is enabled and energy >= 8
+        this.setState((prevState) => {
+            if (!prevState.petEnabled || prevState.energy < 8) return null;
+            const waste = {
+                id: (Date.now() + Math.random()).toString(),
+                x: Math.random() * (this.rect ? this.rect.width : 480),
+                y: Math.random() * (this.rect ? this.rect.height : 360),
+            };
+            return { wasteItems: [...prevState.wasteItems, waste] };
+        });
+    }
+    handleWasteClick(id) {
+        // Remove waste and cost 3 energy
+        this.setState((prevState) => ({
+            wasteItems: prevState.wasteItems.filter((w) => w.id !== id),
+            energy: Math.max(0, prevState.energy - 3),
+        }));
+        this.handleCleanPet();
+    }
+    handleTogglePet() {
+        this.setState((prevState) => ({ petEnabled: !prevState.petEnabled }));
+    }
+    startPetIntervals() {
+        this.petIntervalId = setInterval(() => {
+            this.checkPetNeeds();
+            this.handleTargetsUpdate();
+        }, 1000);
+    }
+    clearPetIntervals() {
+        clearInterval(this.petIntervalId);
+    }
+    // Handler for pet play event from VM
+    handlePetPlayedWith = (target) => {
+        if (!this.state.petEnabled) return;
+        // Only increase happiness if the moved sprite matches the pet sprite name
+        if (
+            target &&
+            target.sprite &&
+            target.sprite.name === this.state.petSpriteName
+        ) {
+            this.setState((prevState) => ({
+                happiness: Math.min(100, prevState.happiness + 2),
+            }));
+        }
+    };
+    // Add handler to set pet by clicking a sprite
+    handleSpriteClick = (e) => {
+        const { x, y } = getEventXY(e);
+        this.updateRect();
+        const mousePosition = [x - this.rect.left, y - this.rect.top];
+        const drawableId = this.renderer.pick(
+            mousePosition[0],
+            mousePosition[1]
+        );
+        if (drawableId === null) return;
+        const targetId = this.props.vm.getTargetIdForDrawableId(drawableId);
+        if (targetId === null) return;
+        const target = this.props.vm.runtime.getTargetById(targetId);
+        if (target && target.sprite) {
+            console.log("Pet sprite set to:", target.sprite.name); // Debug log
+            this.setState({ petSpriteName: target.sprite.name });
+        }
+    };
+    render() {
         const {
             vm, // eslint-disable-line no-unused-vars
             onActivateColorPicker, // eslint-disable-line no-unused-vars
+            anyModalVisible, // <-- new prop
             ...props
         } = this.props;
         return (
@@ -419,6 +881,35 @@ class Stage extends React.Component {
                 question={this.state.question}
                 onDoubleClick={this.handleDoubleClick}
                 onQuestionAnswered={this.handleQuestionAnswered}
+                hunger={this.state.hunger}
+                cleanliness={this.state.cleanliness}
+                happiness={this.state.happiness}
+                energy={this.state.energy}
+                petReactionMessage={this.state.petReactionMessage}
+                petSpeechMessage={this.state.petSpeechMessage}
+                petSpeechVisible={this.state.petSpeechVisible}
+                petX={this.state.petX}
+                petY={this.state.petY}
+                foodItems={this.state.foodItems}
+                collectedFood={this.state.collectedFood}
+                wasteItems={this.state.wasteItems}
+                isSleeping={this.state.isSleeping}
+                sleepCountdown={this.state.sleepCountdown}
+                petEnabled={this.state.petEnabled}
+                onFeedPet={this.handleFeedPet}
+                onPlayWithPet={this.handlePlayWithPet}
+                onCleanPet={this.handleCleanPet}
+                onSleepPet={this.handleSleepPet}
+                onClearPetReactionMessage={this.clearPetReactionMessage}
+                onTogglePet={this.handleTogglePet}
+                onCollectFood={this.collectFood}
+                onFoodClick={this.handleFoodClick}
+                onCollectWaste={this.collectFood}
+                onWasteClick={this.handleWasteClick}
+                anyModalVisible={anyModalVisible}
+                isStarted={this.props.isStarted}
+                // Attach sprite click handler to the stage wrapper
+                onStageClick={this.handleSpriteClick}
                 {...props}
             />
         );
@@ -434,28 +925,25 @@ Stage.propTypes = {
     onDeactivateColorPicker: PropTypes.func,
     stageSize: PropTypes.oneOf(Object.keys(STAGE_DISPLAY_SIZES)).isRequired,
     useEditorDragStyle: PropTypes.bool,
-    vm: PropTypes.instanceOf(VM).isRequired
+    vm: PropTypes.instanceOf(VM).isRequired,
 };
 
 Stage.defaultProps = {
-    useEditorDragStyle: true
+    useEditorDragStyle: true,
 };
 
-const mapStateToProps = state => ({
-    isColorPicking: state.scratchGui.colorPicker.active,
-    isFullScreen: state.scratchGui.mode.isFullScreen,
+const mapStateToProps = (state) => ({
+    anyModalVisible: Object.keys(state.scratchGui.modals).some(
+        (key) => state.scratchGui.modals[key]
+    ),
     isStarted: state.scratchGui.vmStatus.started,
-    micIndicator: state.scratchGui.micIndicator,
-    // Do not use editor drag style in fullscreen or player mode.
-    useEditorDragStyle: !(state.scratchGui.mode.isFullScreen || state.scratchGui.mode.isPlayerOnly)
+    editingTarget: state.scratchGui.targets.editingTarget,
+    sprites: state.scratchGui.targets.sprites,
 });
 
-const mapDispatchToProps = dispatch => ({
+const mapDispatchToProps = (dispatch) => ({
     onActivateColorPicker: () => dispatch(activateColorPicker()),
-    onDeactivateColorPicker: color => dispatch(deactivateColorPicker(color))
+    onDeactivateColorPicker: (color) => dispatch(deactivateColorPicker(color)),
 });
 
-export default connect(
-    mapStateToProps,
-    mapDispatchToProps
-)(Stage);
+export default connect(mapStateToProps)(Stage);

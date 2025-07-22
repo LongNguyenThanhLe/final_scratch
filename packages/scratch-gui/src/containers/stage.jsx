@@ -803,9 +803,9 @@ class Stage extends React.Component {
         this.collectFood(foodId);
     }
     spawnWaste() {
-        // Only spawn if pet is enabled and energy >= 8
+        // Always spawn waste regardless of energy level
         this.setState((prevState) => {
-            if (!prevState.petEnabled || prevState.energy < 8) return null;
+            if (!prevState.petEnabled) return null;
             const waste = {
                 id: (Date.now() + Math.random()).toString(),
                 x: Math.random() * (this.rect ? this.rect.width : 480),
@@ -815,7 +815,17 @@ class Stage extends React.Component {
         });
     }
     handleWasteClick(id) {
-        // Remove waste and cost 3 energy
+        // Only allow cleaning if energy >= 8
+        if (this.state.energy < 8) {
+            this.setState({
+                petSpeechMessage:
+                    "I'm exhausted! Cleaning is hard with low energy!",
+                petSpeechVisible: true,
+            });
+            clearTimeout(this.speechTimeout);
+            this.speechTimeout = setTimeout(this.clearPetSpeech, 2000);
+            return;
+        }
         this.setState((prevState) => ({
             wasteItems: prevState.wasteItems.filter((w) => w.id !== id),
             energy: Math.max(0, prevState.energy - 3),

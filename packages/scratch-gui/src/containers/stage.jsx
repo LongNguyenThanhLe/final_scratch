@@ -81,7 +81,7 @@ class Stage extends React.Component {
             wasteItems: [],
             isSleeping: false,
             sleepCountdown: 0,
-            petEnabled: true,
+            petEnabled: false,
             petSpriteName: this.getPetSpriteName(props),
         };
         if (this.props.vm.renderer) {

@@ -540,6 +540,15 @@ class Stage extends React.Component {
     // - prop passing to StageComponent
     handleFeedPet() {
         if (this.state.isSleeping) return;
+        if (this.state.energy < 2) {
+            this.setState({
+                petSpeechMessage: "I'm too tired to eat!",
+                petSpeechVisible: true,
+            });
+            clearTimeout(this.speechTimeout);
+            this.speechTimeout = setTimeout(this.clearPetSpeech, 2000);
+            return;
+        }
         if (this.state.collectedFood <= 0) {
             this.setState({
                 petReactionMessage:
@@ -557,6 +566,7 @@ class Stage extends React.Component {
                 hunger: Math.max(0, prevState.hunger - 20),
                 cleanliness: Math.max(0, prevState.cleanliness - 5),
                 collectedFood: prevState.collectedFood - 1,
+                energy: Math.max(0, prevState.energy - 2),
                 petReactionMessage: "Yum! Thank you! 😋",
             }),
             () => {

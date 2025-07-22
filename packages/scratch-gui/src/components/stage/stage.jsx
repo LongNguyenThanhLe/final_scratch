@@ -67,14 +67,6 @@ const StageComponent = (props) => {
         ...boxProps
     } = props;
 
-    // Debug log for stat props
-    console.log("Stat board props:", {
-        hunger,
-        cleanliness,
-        happiness,
-        energy,
-    });
-
     const stageDimensions = getStageDimensions(stageSize, isFullScreen);
     const foodEmojis = ["\ud83c\udf4e", "\ud83e\uddb4", "\ud83d\udc1f"];
 

@@ -274,7 +274,7 @@ const StageComponent = (props) => {
                                 </div>
                             </div>
                             {/* Pet Speech Bubble */}
-                            {petSpeechVisible && (
+                            {petSpeechVisible && !anyModalVisible && (
                                 <div
                                     className={styles.petSpeechBubble}
                                     style={{

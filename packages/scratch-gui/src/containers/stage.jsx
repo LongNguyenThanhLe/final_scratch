@@ -185,8 +185,8 @@ class PetSoundManager {
 
     createClockTickingSound(context, volume) {
         const sleepDuration = 30; // 30 seconds of sleep
-        const tickInterval = 0.5; // Time between ticks in seconds
-        const tickDuration = 0.1; // Duration of each tick
+        const tickInterval = 1.0; // Time between ticks in seconds (slower tempo)
+        const tickDuration = 0.15; // Duration of each tick (slightly longer)
         const totalTicks = Math.floor(sleepDuration / tickInterval); // Calculate total ticks needed
 
         for (let i = 0; i < totalTicks; i++) {
@@ -199,15 +199,15 @@ class PetSoundManager {
             oscillator.connect(gainNode);
             gainNode.connect(context.destination);
 
-            // Tick sound - higher frequency for the tick
-            oscillator.frequency.setValueAtTime(800, startTime);
+            // Tick sound - slightly lower frequency for gentler sound
+            oscillator.frequency.setValueAtTime(600, startTime);
             oscillator.type = "sine";
 
-            // Volume envelope for tick
+            // Volume envelope for tick - gentler volume
             gainNode.gain.setValueAtTime(0, startTime);
             gainNode.gain.linearRampToValueAtTime(
-                (volume / 100) * 0.3,
-                startTime + 0.01
+                (volume / 100) * 0.2,
+                startTime + 0.02
             );
             gainNode.gain.exponentialRampToValueAtTime(
                 0.001,
@@ -217,24 +217,24 @@ class PetSoundManager {
             oscillator.start(startTime);
             oscillator.stop(startTime + tickDuration);
 
-            // Add a subtle echo effect
+            // Add a subtle echo effect - gentler echo
             const echoGain = context.createGain();
             echoGain.connect(context.destination);
             echoGain.gain.setValueAtTime(
-                (volume / 100) * 0.1,
-                startTime + 0.05
+                (volume / 100) * 0.05,
+                startTime + 0.08
             );
             echoGain.gain.exponentialRampToValueAtTime(
                 0.001,
-                startTime + tickDuration + 0.05
+                startTime + tickDuration + 0.08
             );
 
             const echoOsc = context.createOscillator();
             echoOsc.connect(echoGain);
-            echoOsc.frequency.setValueAtTime(600, startTime + 0.05);
+            echoOsc.frequency.setValueAtTime(450, startTime + 0.08);
             echoOsc.type = "sine";
-            echoOsc.start(startTime + 0.05);
-            echoOsc.stop(startTime + tickDuration + 0.05);
+            echoOsc.start(startTime + 0.08);
+            echoOsc.stop(startTime + tickDuration + 0.08);
         }
     }
 

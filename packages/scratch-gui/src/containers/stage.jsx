@@ -26,29 +26,24 @@ class PetSoundManager {
         this.vm = vm;
         this.soundMap = {
             eat: "0b1e3033140d094563248e61de4039e5", // Chomp
-            collect: "1f81d88fb419084f4d82ffb859b94ed6", // Coin
-            sleep: "a634fcb87894520edbd7a534d1479ec4", // Clock Ticking
+            collect: "83a9787d4cb6f3b7632b4ddfebf74367", // Pop (proven to work)
+            sleep: "a634fcb87894520edbd7a534d1479ec4", // Clock Ticking (perfect for sleep!)
             wake: "28c76b6bebd04be1383fe9ba4933d263", // Computer Beep
-            clean: "6aed5e38d40b87a21d893d26fa2858c0", // Splash (water sound for cleaning)
+            clean: "83a9787d4cb6f3b7632b4ddfebf74367", // Pop (proven to work)
             sparkle: "78b0be9c9c2f664158b886bc7e794095", // Bubbles (bubbly sound for sparkle)
             water: "e133e625fd367d269e76964d4b722fc2", // Water Drop
-            play: "8bcea76415eaf98ec1cbc3825845b934", // Dance Around (energetic music for play)
-            fun: "0edb8fb88af19e6e17d0f8cf64c1d136", // Dance Celebrate (celebration for fun)
+            play: "83a9787d4cb6f3b7632b4ddfebf74367", // Pop (proven to work)
+            fun: "170e05c29d50918ae0b482c2955768c0", // Cheer (perfect for fun!)
             pop: "83a9787d4cb6f3b7632b4ddfebf74367", // Pop
-            alert: "f62e3bfccab9c23eee781473c94a009c", // Alert
+            alert: "8468b9b3f11a665ee4d215afd8463b97", // Referee Whistle (perfect for alert!)
             snap: "d55b3954d72c6275917f375e49b502f3", // Tap Snare
             tap: "de5b41c7080396986873d97e9e47acf6", // Wood Tap
         };
     }
 
     async playSound(soundName, volume = 100) {
-        console.log(
-            `🎵 Attempting to play sound: ${soundName} at volume ${volume}`
-        );
-
         const soundId = this.soundMap[soundName];
         if (!soundId) {
-            console.warn(`⚠️ No sound ID found for: ${soundName}`);
             return;
         }
 
@@ -57,31 +52,62 @@ class PetSoundManager {
             const stage = this.vm.runtime.getTargetForStage();
             if (stage && stage.audioEngine) {
                 stage.audioEngine.playSound(soundId, { volume: volume / 100 });
-                console.log(
-                    `✅ Sound played via Scratch audio engine: ${soundName}`
-                );
                 return;
             }
         } catch (error) {
-            console.log(`❌ Scratch audio engine failed: ${error.message}`);
+            // Silent fallback
         }
 
         // Fallback: Try to load and play the sound directly
         try {
-            // Try WAV format first
-            let asset = await this.vm.runtime.storage.load(
-                this.vm.runtime.storage.AssetType.Sound,
-                soundId,
-                this.vm.runtime.storage.DataFormat.WAV
-            );
+            // For known ADPCM sounds, try ADPCM format first
+            const adpcmSounds = {
+                sleep: "a634fcb87894520edbd7a534d1479ec4", // Clock Ticking
+                fun: "170e05c29d50918ae0b482c2955768c0", // Cheer
+                alert: "8468b9b3f11a665ee4d215afd8463b97", // Referee Whistle
+                sparkle: "78b0be9c9c2f664158b886bc7e794095", // Bubbles
+                water: "e133e625fd367d269e76964d4b722fc2", // Water Drop
+            };
 
-            // If WAV fails, try ADPCM format
+            let asset = null;
+
+            // Try ADPCM first for known ADPCM sounds
+            if (adpcmSounds[soundName]) {
+                try {
+                    asset = await this.vm.runtime.storage.load(
+                        this.vm.runtime.storage.AssetType.Sound,
+                        soundId,
+                        this.vm.runtime.storage.DataFormat.ADPCM
+                    );
+                } catch (adpcmError) {
+                    // Silent fallback
+                }
+            }
+
+            // If ADPCM failed or not an ADPCM sound, try WAV format
             if (!asset || !asset.data) {
-                asset = await this.vm.runtime.storage.load(
-                    this.vm.runtime.storage.AssetType.Sound,
-                    soundId,
-                    this.vm.runtime.storage.DataFormat.ADPCM
-                );
+                try {
+                    asset = await this.vm.runtime.storage.load(
+                        this.vm.runtime.storage.AssetType.Sound,
+                        soundId,
+                        this.vm.runtime.storage.DataFormat.WAV
+                    );
+                } catch (wavError) {
+                    // Silent fallback
+                }
+            }
+
+            // If WAV failed and we haven't tried ADPCM yet, try ADPCM as fallback
+            if (!asset || !asset.data) {
+                try {
+                    asset = await this.vm.runtime.storage.load(
+                        this.vm.runtime.storage.AssetType.Sound,
+                        soundId,
+                        this.vm.runtime.storage.DataFormat.ADPCM
+                    );
+                } catch (finalError) {
+                    // Silent fallback
+                }
             }
 
             if (asset && asset.data) {
@@ -91,13 +117,10 @@ class PetSoundManager {
                 audio.volume = volume / 100;
                 await audio.play();
                 URL.revokeObjectURL(url);
-                console.log(
-                    `✅ Sound played via direct asset loading: ${soundName}`
-                );
                 return;
             }
         } catch (error) {
-            console.log(`❌ Direct asset loading failed: ${error.message}`);
+            // Silent fallback
         }
 
         // Final fallback: Simple beep
@@ -108,6 +131,13 @@ class PetSoundManager {
             }
 
             const context = window.petAudioContext;
+
+            // Special handling for sleep sound - create custom clock ticking
+            if (soundName === "sleep") {
+                this.createClockTickingSound(context, volume);
+                return;
+            }
+
             const oscillator = context.createOscillator();
             const gainNode = context.createGain();
 
@@ -148,13 +178,63 @@ class PetSoundManager {
 
             oscillator.start(context.currentTime);
             oscillator.stop(context.currentTime + 0.3);
-
-            console.log(`✅ Simple fallback sound generated: ${soundName}`);
         } catch (fallbackError) {
-            console.error(
-                `❌ All sound methods failed for ${soundName}:`,
-                fallbackError
+            // Silent fallback
+        }
+    }
+
+    createClockTickingSound(context, volume) {
+        const sleepDuration = 30; // 30 seconds of sleep
+        const tickInterval = 0.5; // Time between ticks in seconds
+        const tickDuration = 0.1; // Duration of each tick
+        const totalTicks = Math.floor(sleepDuration / tickInterval); // Calculate total ticks needed
+
+        for (let i = 0; i < totalTicks; i++) {
+            const startTime = context.currentTime + i * tickInterval;
+
+            // Create oscillator for tick
+            const oscillator = context.createOscillator();
+            const gainNode = context.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(context.destination);
+
+            // Tick sound - higher frequency for the tick
+            oscillator.frequency.setValueAtTime(800, startTime);
+            oscillator.type = "sine";
+
+            // Volume envelope for tick
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(
+                (volume / 100) * 0.3,
+                startTime + 0.01
             );
+            gainNode.gain.exponentialRampToValueAtTime(
+                0.001,
+                startTime + tickDuration
+            );
+
+            oscillator.start(startTime);
+            oscillator.stop(startTime + tickDuration);
+
+            // Add a subtle echo effect
+            const echoGain = context.createGain();
+            echoGain.connect(context.destination);
+            echoGain.gain.setValueAtTime(
+                (volume / 100) * 0.1,
+                startTime + 0.05
+            );
+            echoGain.gain.exponentialRampToValueAtTime(
+                0.001,
+                startTime + tickDuration + 0.05
+            );
+
+            const echoOsc = context.createOscillator();
+            echoOsc.connect(echoGain);
+            echoOsc.frequency.setValueAtTime(600, startTime + 0.05);
+            echoOsc.type = "sine";
+            echoOsc.start(startTime + 0.05);
+            echoOsc.stop(startTime + tickDuration + 0.05);
         }
     }
 
@@ -297,15 +377,11 @@ class Stage extends React.Component {
         this.statDecayInterval = setInterval(() => this.decayPetStats(), 1000);
         // Start waste spawn interval every 3 minutes
         this.wasteSpawnInterval = setInterval(() => this.spawnWaste(), 180000);
+        // Start pet intervals
         this.startPetIntervals();
         this.petNeedsInterval = setInterval(this.checkPetNeeds, 2000);
 
-        // Test sounds after a delay and expose for debugging
-        setTimeout(() => {
-            this.soundManager.testSounds();
-        }, 2000);
-
-        // Expose sound functions for console debugging
+        // Expose debugging functions globally
         window.testPetSounds = () => this.soundManager.testSounds();
         window.playPetSound = (soundName, volume) =>
             this.soundManager.playSound(soundName, volume);
@@ -742,8 +818,7 @@ class Stage extends React.Component {
             );
 
             // Play alert sound for no food
-            console.log("⚠️ Playing alert sound for no food");
-            await this.soundManager.playSound("alert", 60);
+            await this.soundManager.playSound("alert", 70);
             return;
         }
 
@@ -763,7 +838,6 @@ class Stage extends React.Component {
                 );
 
                 // Play eat sound after state update
-                console.log("🍽️ Playing eat sound for feeding pet");
                 await this.soundManager.playSound("eat", 80);
             }
         );
@@ -807,10 +881,9 @@ class Stage extends React.Component {
                 );
 
                 // Play layered sounds for playing with pet
-                console.log("🎮 Playing layered sounds for playing with pet");
                 await this.soundManager.playLayeredSounds([
-                    { name: "play", volume: 80, delay: 0 },
-                    { name: "fun", volume: 60, delay: 300 },
+                    { name: "play", volume: 90, delay: 0 },
+                    { name: "fun", volume: 70, delay: 150 },
                 ]);
             }
         );
@@ -842,7 +915,6 @@ class Stage extends React.Component {
                 );
 
                 // Play layered sounds for cleaning (cheer + sparkle)
-                console.log("🛁 Playing layered sounds for cleaning pet");
                 await this.soundManager.playLayeredSounds([
                     { name: "clean", volume: 80, delay: 0 },
                     { name: "sparkle", volume: 60, delay: 300 },
@@ -868,7 +940,6 @@ class Stage extends React.Component {
                 );
 
                 // Play sleep sound
-                console.log("😴 Playing sleep sound");
                 await this.soundManager.playSound("sleep", 60);
 
                 clearInterval(this.sleepInterval);
@@ -879,7 +950,6 @@ class Stage extends React.Component {
 
                             // Play wake sound when sleep ends
                             this.soundManager.playSound("wake", 70);
-                            console.log("🔔 Playing wake sound");
 
                             return {
                                 isSleeping: false,
@@ -1021,7 +1091,6 @@ class Stage extends React.Component {
                 }));
 
                 // Play collect sound
-                console.log("🍎 Playing collect sound for food");
                 await this.soundManager.playSound("collect", 70);
             }, 300);
             return {
@@ -1064,7 +1133,6 @@ class Stage extends React.Component {
         }));
 
         // Play clean sound for waste removal
-        console.log("🧹 Playing clean sound for waste removal");
         await this.soundManager.playSound("clean", 60);
 
         this.handleCleanPet();

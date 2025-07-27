@@ -20,6 +20,233 @@ import {
 const colorPickerRadius = 20;
 const dragThreshold = 3; // Same as the block drag threshold
 
+// PetSoundManager class for handling sound effects
+class PetSoundManager {
+    constructor(vm) {
+        this.vm = vm;
+        this.soundMap = {
+            eat: "0b1e3033140d094563248e61de4039e5", // Chomp
+            collect: "32514c51e03db680e9c63857b840ae78", // Collect
+            sleep: "a634fcb87894520edbd7a534d1479ec4", // Clock Ticking
+            wake: "28c76b6bebd04be1383fe9ba4933d263", // Computer Beep
+            clean: "a434069c58e79d42f5d21abb1c318919", // Goal Cheer
+            sparkle: "1f81d88fb419084f4d82ffb859b94ed6", // Coin
+            water: "e133e625fd367d269e76964d4b722fc2", // Water Drop
+            play: "ec66961f188e9b8a9c75771db744d096", // Clown Honk
+            fun: "9d30c38443691e9626d510546d98327c", // Gong
+            pop: "83a9787d4cb6f3b7632b4ddfebf74367", // Pop
+            alert: "f62e3bfccab9c23eee781473c94a009c", // Alert
+            snap: "c2ff5da4d9d85dee866615f672b749ce", // Snap
+            tap: "83a9787d4cb6f3b7632b4ddfebf74367", // Tap (using Pop as fallback)
+        };
+
+        // Complex sound configurations for Web Audio API fallback
+        this.soundConfigs = {
+            eat: {
+                frequencies: [200, 400, 600],
+                waveforms: ["sine", "square", "triangle"],
+                durations: [0.3, 0.2, 0.1],
+                delays: [0, 0.1, 0.2],
+                volumes: [0.7, 0.5, 0.3],
+                filters: ["lowpass", "bandpass"],
+            },
+            collect: {
+                frequencies: [800, 1200, 1600],
+                waveforms: ["sine", "sawtooth"],
+                durations: [0.2, 0.3],
+                delays: [0, 0.1],
+                volumes: [0.6, 0.4],
+                filters: ["highpass"],
+            },
+            sleep: {
+                frequencies: [150, 300],
+                waveforms: ["sine", "triangle"],
+                durations: [0.5, 0.3],
+                delays: [0, 0.2],
+                volumes: [0.4, 0.2],
+                filters: ["lowpass"],
+            },
+            wake: {
+                frequencies: [600, 800, 1000],
+                waveforms: ["sine", "square"],
+                durations: [0.2, 0.1, 0.1],
+                delays: [0, 0.05, 0.1],
+                volumes: [0.6, 0.4, 0.3],
+                filters: ["bandpass"],
+            },
+            clean: {
+                frequencies: [400, 600, 800, 1000],
+                waveforms: ["sine", "square", "triangle", "sawtooth"],
+                durations: [0.3, 0.2, 0.2, 0.1],
+                delays: [0, 0.1, 0.2, 0.3],
+                volumes: [0.7, 0.5, 0.4, 0.3],
+                filters: ["highpass", "bandpass"],
+            },
+            play: {
+                frequencies: [300, 500, 700],
+                waveforms: ["sine", "triangle", "square"],
+                durations: [0.4, 0.3, 0.2],
+                delays: [0, 0.1, 0.2],
+                volumes: [0.6, 0.5, 0.4],
+                filters: ["lowpass", "bandpass"],
+            },
+        };
+    }
+
+    async playSound(soundName, volume = 100) {
+        console.log(
+            `🎵 Attempting to play sound: ${soundName} at volume ${volume}`
+        );
+
+        const soundId = this.soundMap[soundName];
+        if (!soundId) {
+            console.warn(`⚠️ No sound ID found for: ${soundName}`);
+            return;
+        }
+
+        // Tier 1: Try Scratch's native audio engine
+        try {
+            const stage = this.vm.runtime.getTargetForStage();
+            if (stage && stage.audioEngine) {
+                stage.audioEngine.playSound(soundId, { volume: volume / 100 });
+                console.log(
+                    `✅ Sound played via Scratch audio engine: ${soundName}`
+                );
+                return;
+            }
+        } catch (error) {
+            console.log(`❌ Scratch audio engine failed: ${error.message}`);
+        }
+
+        // Tier 2: Web Audio API fallback with complex sounds
+        try {
+            if (!window.petAudioContext) {
+                window.petAudioContext = new (window.AudioContext ||
+                    window.webkitAudioContext)();
+            }
+
+            const config =
+                this.soundConfigs[soundName] || this.soundConfigs.pop;
+            const context = window.petAudioContext;
+
+            config.frequencies.forEach((freq, index) => {
+                const oscillator = context.createOscillator();
+                const gainNode = context.createGain();
+                const filter = context.createBiquadFilter();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(filter);
+                filter.connect(context.destination);
+
+                oscillator.frequency.setValueAtTime(freq, context.currentTime);
+                oscillator.type = config.waveforms[index] || "sine";
+
+                gainNode.gain.setValueAtTime(0, context.currentTime);
+                gainNode.gain.linearRampToValueAtTime(
+                    config.volumes[index] * (volume / 100),
+                    context.currentTime + 0.01
+                );
+                gainNode.gain.exponentialRampToValueAtTime(
+                    0.001,
+                    context.currentTime + config.durations[index]
+                );
+
+                if (config.filters[index]) {
+                    filter.type = config.filters[index];
+                    filter.frequency.setValueAtTime(
+                        freq * 2,
+                        context.currentTime
+                    );
+                }
+
+                oscillator.start(context.currentTime + config.delays[index]);
+                oscillator.stop(
+                    context.currentTime +
+                        config.delays[index] +
+                        config.durations[index]
+                );
+            });
+
+            console.log(
+                `✅ Complex sound generated via Web Audio API: ${soundName}`
+            );
+        } catch (error) {
+            console.log(`❌ Web Audio API failed: ${error.message}`);
+
+            // Tier 3: Simple HTML5 Audio fallback
+            try {
+                const audioData = this.createWAV(
+                    [0.1, 0.2, 0.1, 0.05, 0.02],
+                    44100
+                );
+                const blob = new Blob([audioData], { type: "audio/wav" });
+                const url = URL.createObjectURL(blob);
+                const audio = new Audio(url);
+                audio.volume = volume / 100;
+                await audio.play();
+                URL.revokeObjectURL(url);
+                console.log(`✅ Simple fallback sound played: ${soundName}`);
+            } catch (fallbackError) {
+                console.error(
+                    `❌ All sound methods failed for ${soundName}:`,
+                    fallbackError
+                );
+            }
+        }
+    }
+
+    async playLayeredSounds(sounds) {
+        for (const sound of sounds) {
+            if (sound.delay) {
+                await new Promise((resolve) =>
+                    setTimeout(resolve, sound.delay)
+                );
+            }
+            await this.playSound(sound.name, sound.volume);
+        }
+    }
+
+    createWAV(audioData, sampleRate) {
+        const buffer = new ArrayBuffer(44 + audioData.length * 2);
+        const view = new DataView(buffer);
+
+        // WAV header
+        const writeString = (offset, string) => {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        };
+
+        writeString(0, "RIFF");
+        view.setUint32(4, 36 + audioData.length * 2, true);
+        writeString(8, "WAVE");
+        writeString(12, "fmt ");
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        writeString(36, "data");
+        view.setUint32(40, audioData.length * 2, true);
+
+        // Audio data
+        for (let i = 0; i < audioData.length; i++) {
+            view.setInt16(44 + i * 2, audioData[i] * 32767, true);
+        }
+
+        return buffer;
+    }
+
+    testSounds() {
+        console.log("🧪 Testing pet sounds...");
+        setTimeout(() => this.playSound("pop", 80), 100);
+        setTimeout(() => this.playSound("snap", 80), 500);
+        setTimeout(() => this.playSound("alert", 80), 1000);
+    }
+}
+
 class Stage extends React.Component {
     constructor(props) {
         super(props);
@@ -102,6 +329,9 @@ class Stage extends React.Component {
             this.props.vm.renderer.draw();
         }
         this.props.vm.attachV2BitmapAdapter(new V2BitmapAdapter());
+
+        // Initialize sound manager for pet actions
+        this.soundManager = new PetSoundManager(this.props.vm);
     }
 
     // Helper to get the sprite name for the current editingTarget
@@ -131,6 +361,16 @@ class Stage extends React.Component {
         this.wasteSpawnInterval = setInterval(() => this.spawnWaste(), 180000);
         this.startPetIntervals();
         this.petNeedsInterval = setInterval(this.checkPetNeeds, 2000);
+
+        // Test sounds after a delay and expose for debugging
+        setTimeout(() => {
+            this.soundManager.testSounds();
+        }, 2000);
+
+        // Expose sound functions for console debugging
+        window.testPetSounds = () => this.soundManager.testSounds();
+        window.playPetSound = (soundName, volume) =>
+            this.soundManager.playSound(soundName, volume);
     }
     shouldComponentUpdate(nextProps, nextState) {
         return (
@@ -538,7 +778,7 @@ class Stage extends React.Component {
     // - stat decay and intervals (startPetIntervals, clearPetIntervals, decayPetStats, etc.)
     // - food/waste logic (spawnFood, collectFood, handleFoodClick, spawnWaste, handleWasteClick, etc.)
     // - prop passing to StageComponent
-    handleFeedPet() {
+    async handleFeedPet() {
         if (this.state.isSleeping) return;
         if (this.state.energy < 2) {
             this.setState({
@@ -549,6 +789,9 @@ class Stage extends React.Component {
             this.speechTimeout = setTimeout(this.clearPetSpeech, 2000);
             return;
         }
+
+        const hasFood = this.state.collectedFood > 0;
+
         if (this.state.collectedFood <= 0) {
             this.setState({
                 petReactionMessage:
@@ -559,8 +802,13 @@ class Stage extends React.Component {
                 this.clearPetReactionMessage,
                 1500
             );
+
+            // Play alert sound for no food
+            console.log("⚠️ Playing alert sound for no food");
+            await this.soundManager.playSound("alert", 60);
             return;
         }
+
         this.setState(
             (prevState) => ({
                 hunger: Math.max(0, prevState.hunger - 20),
@@ -569,16 +817,20 @@ class Stage extends React.Component {
                 energy: Math.max(0, prevState.energy - 2),
                 petReactionMessage: "Yum! Thank you! 😋",
             }),
-            () => {
+            async () => {
                 clearTimeout(this.reactionTimeout);
                 this.reactionTimeout = setTimeout(
                     this.clearPetReactionMessage,
                     1500
                 );
+
+                // Play eat sound after state update
+                console.log("🍽️ Playing eat sound for feeding pet");
+                await this.soundManager.playSound("eat", 80);
             }
         );
     }
-    handlePlayWithPet() {
+    async handlePlayWithPet() {
         if (this.state.isSleeping) return;
         if (this.state.hunger > 80) {
             this.setState({
@@ -593,13 +845,14 @@ class Stage extends React.Component {
         if (this.state.energy < 10) {
             this.setState({
                 petSpeechMessage:
-                    "I’m too tired! Let me sleep to get my energy back! 😴",
+                    "I'm too tired! Let me sleep to get my energy back! 😴",
                 petSpeechVisible: true,
             });
             clearTimeout(this.speechTimeout);
             this.speechTimeout = setTimeout(this.clearPetSpeech, 2000);
             return;
         }
+
         this.setState(
             (prevState) => ({
                 happiness: Math.min(100, prevState.happiness + 20),
@@ -608,44 +861,60 @@ class Stage extends React.Component {
                 cleanliness: Math.max(0, prevState.cleanliness - 10),
                 petReactionMessage: "Yay! That was fun! 😺🎉",
             }),
-            () => {
+            async () => {
                 clearTimeout(this.reactionTimeout);
                 this.reactionTimeout = setTimeout(
                     this.clearPetReactionMessage,
                     1500
                 );
+
+                // Play layered sounds for playing
+                console.log("🎮 Playing layered sounds for playing with pet");
+                await this.soundManager.playLayeredSounds([
+                    { name: "play", volume: 80, delay: 0 },
+                    { name: "fun", volume: 60, delay: 200 },
+                ]);
             }
         );
     }
-    handleCleanPet() {
+    async handleCleanPet() {
         if (this.state.isSleeping) return;
         if (this.state.energy < 10) {
             this.setState({
                 petSpeechMessage:
-                    "I’m too tired! Let me sleep to get my energy back! 😴",
+                    "I'm too tired! Let me sleep to get my energy back! 😴",
                 petSpeechVisible: true,
             });
             clearTimeout(this.speechTimeout);
             this.speechTimeout = setTimeout(this.clearPetSpeech, 2000);
             return;
         }
+
         this.setState(
             (prevState) => ({
                 cleanliness: Math.min(100, prevState.cleanliness + 10),
                 energy: Math.max(0, prevState.energy - 10),
                 petReactionMessage: "So fresh! 🛁✨",
             }),
-            () => {
+            async () => {
                 clearTimeout(this.reactionTimeout);
                 this.reactionTimeout = setTimeout(
                     this.clearPetReactionMessage,
                     1500
                 );
+
+                // Play layered sounds for cleaning (cheer + sparkle)
+                console.log("🛁 Playing layered sounds for cleaning pet");
+                await this.soundManager.playLayeredSounds([
+                    { name: "clean", volume: 80, delay: 0 },
+                    { name: "sparkle", volume: 60, delay: 300 },
+                ]);
             }
         );
     }
-    handleSleepPet() {
+    async handleSleepPet() {
         if (this.state.isSleeping) return;
+
         this.setState(
             (prevState) => ({
                 isSleeping: true,
@@ -653,17 +922,27 @@ class Stage extends React.Component {
                 hunger: Math.max(0, prevState.hunger - 5),
                 petReactionMessage: "Zzz... 😴",
             }),
-            () => {
+            async () => {
                 clearTimeout(this.reactionTimeout);
                 this.reactionTimeout = setTimeout(
                     this.clearPetReactionMessage,
                     1500
                 );
+
+                // Play sleep sound
+                console.log("😴 Playing sleep sound");
+                await this.soundManager.playSound("sleep", 60);
+
                 clearInterval(this.sleepInterval);
                 this.sleepInterval = setInterval(() => {
                     this.setState((prevState) => {
                         if (prevState.sleepCountdown <= 1) {
                             clearInterval(this.sleepInterval);
+
+                            // Play wake sound when sleep ends
+                            this.soundManager.playSound("wake", 70);
+                            console.log("🔔 Playing wake sound");
+
                             return {
                                 isSleeping: false,
                                 sleepCountdown: 0,
@@ -789,19 +1068,23 @@ class Stage extends React.Component {
             };
         });
     }
-    collectFood(foodId) {
+    async collectFood(foodId) {
         this.setState((prevState) => {
             const updatedFoodItems = prevState.foodItems.map((food) =>
                 food.id === foodId ? { ...food, collected: true } : food
             );
             // Remove collected food after a short delay
-            setTimeout(() => {
+            setTimeout(async () => {
                 this.setState((prevState2) => ({
                     foodItems: prevState2.foodItems.filter(
                         (food) => food.id !== foodId
                     ),
                     collectedFood: prevState2.collectedFood + 1,
                 }));
+
+                // Play collect sound
+                console.log("🍎 Playing collect sound for food");
+                await this.soundManager.playSound("collect", 70);
             }, 300);
             return {
                 foodItems: updatedFoodItems,
@@ -824,7 +1107,7 @@ class Stage extends React.Component {
             return { wasteItems: [...prevState.wasteItems, waste] };
         });
     }
-    handleWasteClick(id) {
+    async handleWasteClick(id) {
         // Only allow cleaning if energy >= 8
         if (this.state.energy < 8) {
             this.setState({
@@ -836,10 +1119,16 @@ class Stage extends React.Component {
             this.speechTimeout = setTimeout(this.clearPetSpeech, 2000);
             return;
         }
+
         this.setState((prevState) => ({
             wasteItems: prevState.wasteItems.filter((w) => w.id !== id),
             energy: Math.max(0, prevState.energy - 3),
         }));
+
+        // Play clean sound for waste removal
+        console.log("🧹 Playing clean sound for waste removal");
+        await this.soundManager.playSound("clean", 60);
+
         this.handleCleanPet();
     }
     handleTogglePet() {

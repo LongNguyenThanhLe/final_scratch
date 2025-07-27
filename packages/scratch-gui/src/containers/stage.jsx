@@ -43,52 +43,100 @@ class PetSoundManager {
         // Complex sound configurations for Web Audio API fallback
         this.soundConfigs = {
             eat: {
-                frequencies: [200, 400, 600],
-                waveforms: ["sine", "square", "triangle"],
-                durations: [0.3, 0.2, 0.1],
-                delays: [0, 0.1, 0.2],
-                volumes: [0.7, 0.5, 0.3],
-                filters: ["lowpass", "bandpass"],
+                frequencies: [150, 300, 450, 600],
+                waveforms: ["sine", "square", "triangle", "sawtooth"],
+                durations: [0.4, 0.3, 0.2, 0.1],
+                delays: [0, 0.05, 0.1, 0.15],
+                volumes: [0.8, 0.6, 0.4, 0.2],
+                filters: ["lowpass", "bandpass", "highpass"],
             },
             collect: {
-                frequencies: [800, 1200, 1600],
-                waveforms: ["sine", "sawtooth"],
-                durations: [0.2, 0.3],
-                delays: [0, 0.1],
-                volumes: [0.6, 0.4],
-                filters: ["highpass"],
+                frequencies: [800, 1200, 1600, 2000],
+                waveforms: ["sine", "sawtooth", "square"],
+                durations: [0.2, 0.3, 0.15],
+                delays: [0, 0.1, 0.2],
+                volumes: [0.7, 0.5, 0.3],
+                filters: ["highpass", "bandpass"],
             },
             sleep: {
-                frequencies: [150, 300],
+                frequencies: [120, 240, 360],
                 waveforms: ["sine", "triangle"],
-                durations: [0.5, 0.3],
-                delays: [0, 0.2],
-                volumes: [0.4, 0.2],
+                durations: [0.8, 0.6, 0.4],
+                delays: [0, 0.3, 0.6],
+                volumes: [0.5, 0.3, 0.2],
                 filters: ["lowpass"],
             },
             wake: {
-                frequencies: [600, 800, 1000],
-                waveforms: ["sine", "square"],
-                durations: [0.2, 0.1, 0.1],
-                delays: [0, 0.05, 0.1],
-                volumes: [0.6, 0.4, 0.3],
-                filters: ["bandpass"],
+                frequencies: [400, 600, 800, 1000],
+                waveforms: ["sine", "square", "triangle"],
+                durations: [0.3, 0.2, 0.1, 0.05],
+                delays: [0, 0.05, 0.1, 0.15],
+                volumes: [0.7, 0.5, 0.3, 0.2],
+                filters: ["bandpass", "highpass"],
             },
             clean: {
-                frequencies: [400, 600, 800, 1000],
-                waveforms: ["sine", "square", "triangle", "sawtooth"],
-                durations: [0.3, 0.2, 0.2, 0.1],
+                frequencies: [300, 500, 700, 900, 1100],
+                waveforms: ["sine", "square", "triangle", "sawtooth", "sine"],
+                durations: [0.4, 0.3, 0.2, 0.15, 0.1],
+                delays: [0, 0.1, 0.2, 0.3, 0.4],
+                volumes: [0.8, 0.6, 0.5, 0.4, 0.3],
+                filters: ["highpass", "bandpass", "lowpass"],
+            },
+            sparkle: {
+                frequencies: [1000, 1500, 2000, 2500],
+                waveforms: ["sine", "triangle", "sawtooth"],
+                durations: [0.15, 0.2, 0.1, 0.05],
                 delays: [0, 0.1, 0.2, 0.3],
-                volumes: [0.7, 0.5, 0.4, 0.3],
+                volumes: [0.6, 0.4, 0.3, 0.2],
                 filters: ["highpass", "bandpass"],
             },
             play: {
-                frequencies: [300, 500, 700],
-                waveforms: ["sine", "triangle", "square"],
-                durations: [0.4, 0.3, 0.2],
-                delays: [0, 0.1, 0.2],
-                volumes: [0.6, 0.5, 0.4],
+                frequencies: [200, 400, 600, 800],
+                waveforms: ["sine", "triangle", "square", "sawtooth"],
+                durations: [0.5, 0.4, 0.3, 0.2],
+                delays: [0, 0.1, 0.2, 0.3],
+                volumes: [0.7, 0.6, 0.5, 0.4],
                 filters: ["lowpass", "bandpass"],
+            },
+            fun: {
+                frequencies: [250, 500, 750, 1000],
+                waveforms: ["sawtooth", "square", "triangle", "sine"],
+                durations: [0.3, 0.25, 0.2, 0.15],
+                delays: [0, 0.08, 0.16, 0.24],
+                volumes: [0.6, 0.5, 0.4, 0.3],
+                filters: ["bandpass", "highpass"],
+            },
+            pop: {
+                frequencies: [100, 200, 300],
+                waveforms: ["sine", "square"],
+                durations: [0.1, 0.15, 0.05],
+                delays: [0, 0.05, 0.1],
+                volumes: [0.8, 0.6, 0.4],
+                filters: ["lowpass"],
+            },
+            snap: {
+                frequencies: [400, 600, 800],
+                waveforms: ["square", "sawtooth"],
+                durations: [0.08, 0.12, 0.06],
+                delays: [0, 0.04, 0.08],
+                volumes: [0.7, 0.5, 0.3],
+                filters: ["bandpass"],
+            },
+            alert: {
+                frequencies: [300, 600, 900],
+                waveforms: ["sine", "square", "triangle"],
+                durations: [0.2, 0.3, 0.1],
+                delays: [0, 0.1, 0.2],
+                volumes: [0.6, 0.4, 0.3],
+                filters: ["highpass", "bandpass"],
+            },
+            water: {
+                frequencies: [800, 1200, 1600],
+                waveforms: ["sine", "triangle"],
+                durations: [0.4, 0.3, 0.2],
+                delays: [0, 0.2, 0.4],
+                volumes: [0.5, 0.3, 0.2],
+                filters: ["highpass"],
             },
         };
     }
@@ -125,11 +173,24 @@ class PetSoundManager {
                     window.webkitAudioContext)();
             }
 
-            const config =
-                this.soundConfigs[soundName] || this.soundConfigs.pop;
-            const context = window.petAudioContext;
+            const config = this.soundConfigs[soundName];
+            if (!config) {
+                console.log(
+                    `⚠️ No sound config found for: ${soundName}, using fallback`
+                );
+                throw new Error("No sound config");
+            }
 
-            config.frequencies.forEach((freq, index) => {
+            const context = window.petAudioContext;
+            const maxLength = Math.max(
+                config.frequencies.length,
+                config.waveforms.length,
+                config.durations.length,
+                config.delays.length,
+                config.volumes.length
+            );
+
+            for (let i = 0; i < maxLength; i++) {
                 const oscillator = context.createOscillator();
                 const gainNode = context.createGain();
                 const filter = context.createBiquadFilter();
@@ -138,34 +199,37 @@ class PetSoundManager {
                 gainNode.connect(filter);
                 filter.connect(context.destination);
 
+                const freq = config.frequencies[i] || config.frequencies[0];
+                const waveform = config.waveforms[i] || config.waveforms[0];
+                const duration = config.durations[i] || config.durations[0];
+                const delay = config.delays[i] || 0;
+                const volume = config.volumes[i] || config.volumes[0];
+                const filterType = config.filters[i] || config.filters[0];
+
                 oscillator.frequency.setValueAtTime(freq, context.currentTime);
-                oscillator.type = config.waveforms[index] || "sine";
+                oscillator.type = waveform;
 
                 gainNode.gain.setValueAtTime(0, context.currentTime);
                 gainNode.gain.linearRampToValueAtTime(
-                    config.volumes[index] * (volume / 100),
+                    Math.max(0.001, Math.min(1, volume * (volume / 100))),
                     context.currentTime + 0.01
                 );
                 gainNode.gain.exponentialRampToValueAtTime(
                     0.001,
-                    context.currentTime + config.durations[index]
+                    context.currentTime + duration
                 );
 
-                if (config.filters[index]) {
-                    filter.type = config.filters[index];
+                if (filterType) {
+                    filter.type = filterType;
                     filter.frequency.setValueAtTime(
                         freq * 2,
                         context.currentTime
                     );
                 }
 
-                oscillator.start(context.currentTime + config.delays[index]);
-                oscillator.stop(
-                    context.currentTime +
-                        config.delays[index] +
-                        config.durations[index]
-                );
-            });
+                oscillator.start(context.currentTime + delay);
+                oscillator.stop(context.currentTime + delay + duration);
+            }
 
             console.log(
                 `✅ Complex sound generated via Web Audio API: ${soundName}`
@@ -244,6 +308,14 @@ class PetSoundManager {
         setTimeout(() => this.playSound("pop", 80), 100);
         setTimeout(() => this.playSound("snap", 80), 500);
         setTimeout(() => this.playSound("alert", 80), 1000);
+        setTimeout(() => this.playSound("collect", 70), 1500);
+        setTimeout(() => this.playSound("eat", 80), 2000);
+        setTimeout(() => this.playSound("play", 80), 2500);
+        setTimeout(() => this.playSound("fun", 60), 3000);
+        setTimeout(() => this.playSound("clean", 80), 3500);
+        setTimeout(() => this.playSound("sparkle", 60), 4000);
+        setTimeout(() => this.playSound("sleep", 60), 4500);
+        setTimeout(() => this.playSound("wake", 70), 5000);
     }
 }
 

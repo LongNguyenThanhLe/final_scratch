@@ -20,6 +20,251 @@ import {
 const colorPickerRadius = 20;
 const dragThreshold = 3; // Same as the block drag threshold
 
+// PetSoundManager class for handling sound effects
+class PetSoundManager {
+    constructor(vm) {
+        this.vm = vm;
+        this.soundMap = {
+            eat: "0b1e3033140d094563248e61de4039e5", // Chomp
+            collect: "83a9787d4cb6f3b7632b4ddfebf74367", // Pop (proven to work)
+            sleep: "a634fcb87894520edbd7a534d1479ec4", // Clock Ticking (perfect for sleep!)
+            wake: "28c76b6bebd04be1383fe9ba4933d263", // Computer Beep
+            clean: "83a9787d4cb6f3b7632b4ddfebf74367", // Pop (proven to work)
+            sparkle: "78b0be9c9c2f664158b886bc7e794095", // Bubbles (bubbly sound for sparkle)
+            water: "e133e625fd367d269e76964d4b722fc2", // Water Drop
+            play: "83a9787d4cb6f3b7632b4ddfebf74367", // Pop (proven to work)
+            fun: "170e05c29d50918ae0b482c2955768c0", // Cheer (perfect for fun!)
+            pop: "83a9787d4cb6f3b7632b4ddfebf74367", // Pop
+            alert: "8468b9b3f11a665ee4d215afd8463b97", // Referee Whistle (perfect for alert!)
+            snap: "d55b3954d72c6275917f375e49b502f3", // Tap Snare
+            tap: "de5b41c7080396986873d97e9e47acf6", // Wood Tap
+        };
+    }
+
+    async playSound(soundName, volume = 100) {
+        const soundId = this.soundMap[soundName];
+        if (!soundId) {
+            return;
+        }
+
+        // Try Scratch's native audio engine first
+        try {
+            const stage = this.vm.runtime.getTargetForStage();
+            if (stage && stage.audioEngine) {
+                stage.audioEngine.playSound(soundId, { volume: volume / 100 });
+                return;
+            }
+        } catch (error) {
+            // Silent fallback
+        }
+
+        // Fallback: Try to load and play the sound directly
+        try {
+            // For known ADPCM sounds, try ADPCM format first
+            const adpcmSounds = {
+                sleep: "a634fcb87894520edbd7a534d1479ec4", // Clock Ticking
+                fun: "170e05c29d50918ae0b482c2955768c0", // Cheer
+                alert: "8468b9b3f11a665ee4d215afd8463b97", // Referee Whistle
+                sparkle: "78b0be9c9c2f664158b886bc7e794095", // Bubbles
+                water: "e133e625fd367d269e76964d4b722fc2", // Water Drop
+            };
+
+            let asset = null;
+
+            // Try ADPCM first for known ADPCM sounds
+            if (adpcmSounds[soundName]) {
+                try {
+                    asset = await this.vm.runtime.storage.load(
+                        this.vm.runtime.storage.AssetType.Sound,
+                        soundId,
+                        this.vm.runtime.storage.DataFormat.ADPCM
+                    );
+                } catch (adpcmError) {
+                    // Silent fallback
+                }
+            }
+
+            // If ADPCM failed or not an ADPCM sound, try WAV format
+            if (!asset || !asset.data) {
+                try {
+                    asset = await this.vm.runtime.storage.load(
+                        this.vm.runtime.storage.AssetType.Sound,
+                        soundId,
+                        this.vm.runtime.storage.DataFormat.WAV
+                    );
+                } catch (wavError) {
+                    // Silent fallback
+                }
+            }
+
+            // If WAV failed and we haven't tried ADPCM yet, try ADPCM as fallback
+            if (!asset || !asset.data) {
+                try {
+                    asset = await this.vm.runtime.storage.load(
+                        this.vm.runtime.storage.AssetType.Sound,
+                        soundId,
+                        this.vm.runtime.storage.DataFormat.ADPCM
+                    );
+                } catch (finalError) {
+                    // Silent fallback
+                }
+            }
+
+            if (asset && asset.data) {
+                const blob = new Blob([asset.data], { type: "audio/wav" });
+                const url = URL.createObjectURL(blob);
+                const audio = new Audio(url);
+                audio.volume = volume / 100;
+                await audio.play();
+                URL.revokeObjectURL(url);
+                return;
+            }
+        } catch (error) {
+            // Silent fallback
+        }
+
+        // Final fallback: Simple beep
+        try {
+            if (!window.petAudioContext) {
+                window.petAudioContext = new (window.AudioContext ||
+                    window.webkitAudioContext)();
+            }
+
+            const context = window.petAudioContext;
+
+            // Special handling for sleep sound - create custom clock ticking
+            if (soundName === "sleep") {
+                this.createClockTickingSound(context, volume);
+                return;
+            }
+
+            const oscillator = context.createOscillator();
+            const gainNode = context.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(context.destination);
+
+            // Create a simple beep based on the sound type
+            const frequencies = {
+                eat: [200, 400],
+                collect: [800, 1200],
+                sleep: [150, 300],
+                wake: [600, 800],
+                clean: [400, 600],
+                sparkle: [1000, 1500],
+                play: [300, 500],
+                fun: [250, 500],
+                pop: [100, 200],
+                snap: [400, 600],
+                alert: [300, 600],
+            };
+
+            const freq = frequencies[soundName]
+                ? frequencies[soundName][0]
+                : 440;
+
+            oscillator.frequency.setValueAtTime(freq, context.currentTime);
+            oscillator.type = "sine";
+
+            gainNode.gain.setValueAtTime(0, context.currentTime);
+            gainNode.gain.linearRampToValueAtTime(
+                volume / 100,
+                context.currentTime + 0.01
+            );
+            gainNode.gain.exponentialRampToValueAtTime(
+                0.001,
+                context.currentTime + 0.3
+            );
+
+            oscillator.start(context.currentTime);
+            oscillator.stop(context.currentTime + 0.3);
+        } catch (fallbackError) {
+            // Silent fallback
+        }
+    }
+
+    createClockTickingSound(context, volume) {
+        const sleepDuration = 30; // 30 seconds of sleep
+        const tickInterval = 1.0; // Time between ticks in seconds (slower tempo)
+        const tickDuration = 0.15; // Duration of each tick (slightly longer)
+        const totalTicks = Math.floor(sleepDuration / tickInterval); // Calculate total ticks needed
+
+        for (let i = 0; i < totalTicks; i++) {
+            const startTime = context.currentTime + i * tickInterval;
+
+            // Create oscillator for tick
+            const oscillator = context.createOscillator();
+            const gainNode = context.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(context.destination);
+
+            // Tick sound - slightly lower frequency for gentler sound
+            oscillator.frequency.setValueAtTime(600, startTime);
+            oscillator.type = "sine";
+
+            // Volume envelope for tick - gentler volume
+            gainNode.gain.setValueAtTime(0, startTime);
+            gainNode.gain.linearRampToValueAtTime(
+                (volume / 100) * 0.2,
+                startTime + 0.02
+            );
+            gainNode.gain.exponentialRampToValueAtTime(
+                0.001,
+                startTime + tickDuration
+            );
+
+            oscillator.start(startTime);
+            oscillator.stop(startTime + tickDuration);
+
+            // Add a subtle echo effect - gentler echo
+            const echoGain = context.createGain();
+            echoGain.connect(context.destination);
+            echoGain.gain.setValueAtTime(
+                (volume / 100) * 0.05,
+                startTime + 0.08
+            );
+            echoGain.gain.exponentialRampToValueAtTime(
+                0.001,
+                startTime + tickDuration + 0.08
+            );
+
+            const echoOsc = context.createOscillator();
+            echoOsc.connect(echoGain);
+            echoOsc.frequency.setValueAtTime(450, startTime + 0.08);
+            echoOsc.type = "sine";
+            echoOsc.start(startTime + 0.08);
+            echoOsc.stop(startTime + tickDuration + 0.08);
+        }
+    }
+
+    async playLayeredSounds(sounds) {
+        for (const sound of sounds) {
+            if (sound.delay) {
+                await new Promise((resolve) =>
+                    setTimeout(resolve, sound.delay)
+                );
+            }
+            await this.playSound(sound.name, sound.volume);
+        }
+    }
+
+    testSounds() {
+        console.log("🧪 Testing pet sounds...");
+        setTimeout(() => this.playSound("pop", 80), 100);
+        setTimeout(() => this.playSound("snap", 80), 500);
+        setTimeout(() => this.playSound("alert", 80), 1000);
+        setTimeout(() => this.playSound("collect", 70), 1500);
+        setTimeout(() => this.playSound("eat", 80), 2000);
+        setTimeout(() => this.playSound("play", 80), 2500);
+        setTimeout(() => this.playSound("fun", 60), 3000);
+        setTimeout(() => this.playSound("clean", 80), 3500);
+        setTimeout(() => this.playSound("sparkle", 60), 4000);
+        setTimeout(() => this.playSound("sleep", 60), 4500);
+        setTimeout(() => this.playSound("wake", 70), 5000);
+    }
+}
+
 class Stage extends React.Component {
     constructor(props) {
         super(props);
@@ -102,6 +347,9 @@ class Stage extends React.Component {
             this.props.vm.renderer.draw();
         }
         this.props.vm.attachV2BitmapAdapter(new V2BitmapAdapter());
+
+        // Initialize sound manager for pet actions
+        this.soundManager = new PetSoundManager(this.props.vm);
     }
 
     // Helper to get the sprite name for the current editingTarget
@@ -129,8 +377,14 @@ class Stage extends React.Component {
         this.statDecayInterval = setInterval(() => this.decayPetStats(), 1000);
         // Start waste spawn interval every 3 minutes
         this.wasteSpawnInterval = setInterval(() => this.spawnWaste(), 180000);
+        // Start pet intervals
         this.startPetIntervals();
         this.petNeedsInterval = setInterval(this.checkPetNeeds, 2000);
+
+        // Expose debugging functions globally
+        window.testPetSounds = () => this.soundManager.testSounds();
+        window.playPetSound = (soundName, volume) =>
+            this.soundManager.playSound(soundName, volume);
     }
     shouldComponentUpdate(nextProps, nextState) {
         return (
@@ -538,7 +792,7 @@ class Stage extends React.Component {
     // - stat decay and intervals (startPetIntervals, clearPetIntervals, decayPetStats, etc.)
     // - food/waste logic (spawnFood, collectFood, handleFoodClick, spawnWaste, handleWasteClick, etc.)
     // - prop passing to StageComponent
-    handleFeedPet() {
+    async handleFeedPet() {
         if (this.state.isSleeping) return;
         if (this.state.energy < 2) {
             this.setState({
@@ -549,6 +803,9 @@ class Stage extends React.Component {
             this.speechTimeout = setTimeout(this.clearPetSpeech, 2000);
             return;
         }
+
+        const hasFood = this.state.collectedFood > 0;
+
         if (this.state.collectedFood <= 0) {
             this.setState({
                 petReactionMessage:
@@ -559,8 +816,12 @@ class Stage extends React.Component {
                 this.clearPetReactionMessage,
                 1500
             );
+
+            // Play alert sound for no food
+            await this.soundManager.playSound("alert", 70);
             return;
         }
+
         this.setState(
             (prevState) => ({
                 hunger: Math.max(0, prevState.hunger - 20),
@@ -569,16 +830,19 @@ class Stage extends React.Component {
                 energy: Math.max(0, prevState.energy - 2),
                 petReactionMessage: "Yum! Thank you! 😋",
             }),
-            () => {
+            async () => {
                 clearTimeout(this.reactionTimeout);
                 this.reactionTimeout = setTimeout(
                     this.clearPetReactionMessage,
                     1500
                 );
+
+                // Play eat sound after state update
+                await this.soundManager.playSound("eat", 80);
             }
         );
     }
-    handlePlayWithPet() {
+    async handlePlayWithPet() {
         if (this.state.isSleeping) return;
         if (this.state.hunger > 80) {
             this.setState({
@@ -593,13 +857,14 @@ class Stage extends React.Component {
         if (this.state.energy < 10) {
             this.setState({
                 petSpeechMessage:
-                    "I’m too tired! Let me sleep to get my energy back! 😴",
+                    "I'm too tired! Let me sleep to get my energy back! 😴",
                 petSpeechVisible: true,
             });
             clearTimeout(this.speechTimeout);
             this.speechTimeout = setTimeout(this.clearPetSpeech, 2000);
             return;
         }
+
         this.setState(
             (prevState) => ({
                 happiness: Math.min(100, prevState.happiness + 20),
@@ -608,44 +873,58 @@ class Stage extends React.Component {
                 cleanliness: Math.max(0, prevState.cleanliness - 10),
                 petReactionMessage: "Yay! That was fun! 😺🎉",
             }),
-            () => {
+            async () => {
                 clearTimeout(this.reactionTimeout);
                 this.reactionTimeout = setTimeout(
                     this.clearPetReactionMessage,
                     1500
                 );
+
+                // Play layered sounds for playing with pet
+                await this.soundManager.playLayeredSounds([
+                    { name: "play", volume: 90, delay: 0 },
+                    { name: "fun", volume: 70, delay: 150 },
+                ]);
             }
         );
     }
-    handleCleanPet() {
+    async handleCleanPet() {
         if (this.state.isSleeping) return;
         if (this.state.energy < 10) {
             this.setState({
                 petSpeechMessage:
-                    "I’m too tired! Let me sleep to get my energy back! 😴",
+                    "I'm too tired! Let me sleep to get my energy back! 😴",
                 petSpeechVisible: true,
             });
             clearTimeout(this.speechTimeout);
             this.speechTimeout = setTimeout(this.clearPetSpeech, 2000);
             return;
         }
+
         this.setState(
             (prevState) => ({
                 cleanliness: Math.min(100, prevState.cleanliness + 10),
                 energy: Math.max(0, prevState.energy - 10),
                 petReactionMessage: "So fresh! 🛁✨",
             }),
-            () => {
+            async () => {
                 clearTimeout(this.reactionTimeout);
                 this.reactionTimeout = setTimeout(
                     this.clearPetReactionMessage,
                     1500
                 );
+
+                // Play layered sounds for cleaning (cheer + sparkle)
+                await this.soundManager.playLayeredSounds([
+                    { name: "clean", volume: 80, delay: 0 },
+                    { name: "sparkle", volume: 60, delay: 300 },
+                ]);
             }
         );
     }
-    handleSleepPet() {
+    async handleSleepPet() {
         if (this.state.isSleeping) return;
+
         this.setState(
             (prevState) => ({
                 isSleeping: true,
@@ -653,17 +932,25 @@ class Stage extends React.Component {
                 hunger: Math.max(0, prevState.hunger - 5),
                 petReactionMessage: "Zzz... 😴",
             }),
-            () => {
+            async () => {
                 clearTimeout(this.reactionTimeout);
                 this.reactionTimeout = setTimeout(
                     this.clearPetReactionMessage,
                     1500
                 );
+
+                // Play sleep sound
+                await this.soundManager.playSound("sleep", 60);
+
                 clearInterval(this.sleepInterval);
                 this.sleepInterval = setInterval(() => {
                     this.setState((prevState) => {
                         if (prevState.sleepCountdown <= 1) {
                             clearInterval(this.sleepInterval);
+
+                            // Play wake sound when sleep ends
+                            this.soundManager.playSound("wake", 70);
+
                             return {
                                 isSleeping: false,
                                 sleepCountdown: 0,
@@ -789,19 +1076,22 @@ class Stage extends React.Component {
             };
         });
     }
-    collectFood(foodId) {
+    async collectFood(foodId) {
         this.setState((prevState) => {
             const updatedFoodItems = prevState.foodItems.map((food) =>
                 food.id === foodId ? { ...food, collected: true } : food
             );
             // Remove collected food after a short delay
-            setTimeout(() => {
+            setTimeout(async () => {
                 this.setState((prevState2) => ({
                     foodItems: prevState2.foodItems.filter(
                         (food) => food.id !== foodId
                     ),
                     collectedFood: prevState2.collectedFood + 1,
                 }));
+
+                // Play collect sound
+                await this.soundManager.playSound("collect", 70);
             }, 300);
             return {
                 foodItems: updatedFoodItems,
@@ -824,7 +1114,7 @@ class Stage extends React.Component {
             return { wasteItems: [...prevState.wasteItems, waste] };
         });
     }
-    handleWasteClick(id) {
+    async handleWasteClick(id) {
         // Only allow cleaning if energy >= 8
         if (this.state.energy < 8) {
             this.setState({
@@ -836,10 +1126,15 @@ class Stage extends React.Component {
             this.speechTimeout = setTimeout(this.clearPetSpeech, 2000);
             return;
         }
+
         this.setState((prevState) => ({
             wasteItems: prevState.wasteItems.filter((w) => w.id !== id),
             energy: Math.max(0, prevState.energy - 3),
         }));
+
+        // Play clean sound for waste removal
+        await this.soundManager.playSound("clean", 60);
+
         this.handleCleanPet();
     }
     handleTogglePet() {

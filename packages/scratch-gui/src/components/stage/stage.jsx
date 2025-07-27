@@ -88,15 +88,14 @@ const StageComponent = (props) => {
                             left: 10,
                             zIndex: 2000,
                         }}
+                        title={
+                            petEnabled ? "Virtual Pet: ON" : "Virtual Pet: OFF"
+                        }
                     >
                         <Switch
                             checked={petEnabled}
                             onChange={onTogglePet}
-                            label={
-                                petEnabled
-                                    ? "Virtual Pet: ON"
-                                    : "Virtual Pet: OFF"
-                            }
+                            label="Virtual Pet"
                         />
                     </div>
                 )}

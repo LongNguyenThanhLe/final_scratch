@@ -26,118 +26,18 @@ class PetSoundManager {
         this.vm = vm;
         this.soundMap = {
             eat: "0b1e3033140d094563248e61de4039e5", // Chomp
-            collect: "32514c51e03db680e9c63857b840ae78", // Collect
+            collect: "1f81d88fb419084f4d82ffb859b94ed6", // Coin
             sleep: "a634fcb87894520edbd7a534d1479ec4", // Clock Ticking
             wake: "28c76b6bebd04be1383fe9ba4933d263", // Computer Beep
-            clean: "a434069c58e79d42f5d21abb1c318919", // Goal Cheer
-            sparkle: "1f81d88fb419084f4d82ffb859b94ed6", // Coin
+            clean: "6aed5e38d40b87a21d893d26fa2858c0", // Splash (water sound for cleaning)
+            sparkle: "78b0be9c9c2f664158b886bc7e794095", // Bubbles (bubbly sound for sparkle)
             water: "e133e625fd367d269e76964d4b722fc2", // Water Drop
-            play: "ec66961f188e9b8a9c75771db744d096", // Clown Honk
-            fun: "9d30c38443691e9626d510546d98327c", // Gong
+            play: "8bcea76415eaf98ec1cbc3825845b934", // Dance Around (energetic music for play)
+            fun: "0edb8fb88af19e6e17d0f8cf64c1d136", // Dance Celebrate (celebration for fun)
             pop: "83a9787d4cb6f3b7632b4ddfebf74367", // Pop
             alert: "f62e3bfccab9c23eee781473c94a009c", // Alert
-            snap: "c2ff5da4d9d85dee866615f672b749ce", // Snap
-            tap: "83a9787d4cb6f3b7632b4ddfebf74367", // Tap (using Pop as fallback)
-        };
-
-        // Complex sound configurations for Web Audio API fallback
-        this.soundConfigs = {
-            eat: {
-                frequencies: [150, 300, 450, 600],
-                waveforms: ["sine", "square", "triangle", "sawtooth"],
-                durations: [0.4, 0.3, 0.2, 0.1],
-                delays: [0, 0.05, 0.1, 0.15],
-                volumes: [0.8, 0.6, 0.4, 0.2],
-                filters: ["lowpass", "bandpass", "highpass"],
-            },
-            collect: {
-                frequencies: [800, 1200, 1600, 2000],
-                waveforms: ["sine", "sawtooth", "square"],
-                durations: [0.2, 0.3, 0.15],
-                delays: [0, 0.1, 0.2],
-                volumes: [0.7, 0.5, 0.3],
-                filters: ["highpass", "bandpass"],
-            },
-            sleep: {
-                frequencies: [120, 240, 360],
-                waveforms: ["sine", "triangle"],
-                durations: [0.8, 0.6, 0.4],
-                delays: [0, 0.3, 0.6],
-                volumes: [0.5, 0.3, 0.2],
-                filters: ["lowpass"],
-            },
-            wake: {
-                frequencies: [400, 600, 800, 1000],
-                waveforms: ["sine", "square", "triangle"],
-                durations: [0.3, 0.2, 0.1, 0.05],
-                delays: [0, 0.05, 0.1, 0.15],
-                volumes: [0.7, 0.5, 0.3, 0.2],
-                filters: ["bandpass", "highpass"],
-            },
-            clean: {
-                frequencies: [300, 500, 700, 900, 1100],
-                waveforms: ["sine", "square", "triangle", "sawtooth", "sine"],
-                durations: [0.4, 0.3, 0.2, 0.15, 0.1],
-                delays: [0, 0.1, 0.2, 0.3, 0.4],
-                volumes: [0.8, 0.6, 0.5, 0.4, 0.3],
-                filters: ["highpass", "bandpass", "lowpass"],
-            },
-            sparkle: {
-                frequencies: [1000, 1500, 2000, 2500],
-                waveforms: ["sine", "triangle", "sawtooth"],
-                durations: [0.15, 0.2, 0.1, 0.05],
-                delays: [0, 0.1, 0.2, 0.3],
-                volumes: [0.6, 0.4, 0.3, 0.2],
-                filters: ["highpass", "bandpass"],
-            },
-            play: {
-                frequencies: [200, 400, 600, 800],
-                waveforms: ["sine", "triangle", "square", "sawtooth"],
-                durations: [0.5, 0.4, 0.3, 0.2],
-                delays: [0, 0.1, 0.2, 0.3],
-                volumes: [0.7, 0.6, 0.5, 0.4],
-                filters: ["lowpass", "bandpass"],
-            },
-            fun: {
-                frequencies: [250, 500, 750, 1000],
-                waveforms: ["sawtooth", "square", "triangle", "sine"],
-                durations: [0.3, 0.25, 0.2, 0.15],
-                delays: [0, 0.08, 0.16, 0.24],
-                volumes: [0.6, 0.5, 0.4, 0.3],
-                filters: ["bandpass", "highpass"],
-            },
-            pop: {
-                frequencies: [100, 200, 300],
-                waveforms: ["sine", "square"],
-                durations: [0.1, 0.15, 0.05],
-                delays: [0, 0.05, 0.1],
-                volumes: [0.8, 0.6, 0.4],
-                filters: ["lowpass"],
-            },
-            snap: {
-                frequencies: [400, 600, 800],
-                waveforms: ["square", "sawtooth"],
-                durations: [0.08, 0.12, 0.06],
-                delays: [0, 0.04, 0.08],
-                volumes: [0.7, 0.5, 0.3],
-                filters: ["bandpass"],
-            },
-            alert: {
-                frequencies: [300, 600, 900],
-                waveforms: ["sine", "square", "triangle"],
-                durations: [0.2, 0.3, 0.1],
-                delays: [0, 0.1, 0.2],
-                volumes: [0.6, 0.4, 0.3],
-                filters: ["highpass", "bandpass"],
-            },
-            water: {
-                frequencies: [800, 1200, 1600],
-                waveforms: ["sine", "triangle"],
-                durations: [0.4, 0.3, 0.2],
-                delays: [0, 0.2, 0.4],
-                volumes: [0.5, 0.3, 0.2],
-                filters: ["highpass"],
-            },
+            snap: "d55b3954d72c6275917f375e49b502f3", // Tap Snare
+            tap: "de5b41c7080396986873d97e9e47acf6", // Wood Tap
         };
     }
 
@@ -152,7 +52,7 @@ class PetSoundManager {
             return;
         }
 
-        // Tier 1: Try Scratch's native audio engine
+        // Try Scratch's native audio engine first
         try {
             const stage = this.vm.runtime.getTargetForStage();
             if (stage && stage.audioEngine) {
@@ -166,96 +66,95 @@ class PetSoundManager {
             console.log(`❌ Scratch audio engine failed: ${error.message}`);
         }
 
-        // Tier 2: Web Audio API fallback with complex sounds
+        // Fallback: Try to load and play the sound directly
+        try {
+            // Try WAV format first
+            let asset = await this.vm.runtime.storage.load(
+                this.vm.runtime.storage.AssetType.Sound,
+                soundId,
+                this.vm.runtime.storage.DataFormat.WAV
+            );
+
+            // If WAV fails, try ADPCM format
+            if (!asset || !asset.data) {
+                asset = await this.vm.runtime.storage.load(
+                    this.vm.runtime.storage.AssetType.Sound,
+                    soundId,
+                    this.vm.runtime.storage.DataFormat.ADPCM
+                );
+            }
+
+            if (asset && asset.data) {
+                const blob = new Blob([asset.data], { type: "audio/wav" });
+                const url = URL.createObjectURL(blob);
+                const audio = new Audio(url);
+                audio.volume = volume / 100;
+                await audio.play();
+                URL.revokeObjectURL(url);
+                console.log(
+                    `✅ Sound played via direct asset loading: ${soundName}`
+                );
+                return;
+            }
+        } catch (error) {
+            console.log(`❌ Direct asset loading failed: ${error.message}`);
+        }
+
+        // Final fallback: Simple beep
         try {
             if (!window.petAudioContext) {
                 window.petAudioContext = new (window.AudioContext ||
                     window.webkitAudioContext)();
             }
 
-            const config = this.soundConfigs[soundName];
-            if (!config) {
-                console.log(
-                    `⚠️ No sound config found for: ${soundName}, using fallback`
-                );
-                throw new Error("No sound config");
-            }
-
             const context = window.petAudioContext;
-            const maxLength = Math.max(
-                config.frequencies.length,
-                config.waveforms.length,
-                config.durations.length,
-                config.delays.length,
-                config.volumes.length
+            const oscillator = context.createOscillator();
+            const gainNode = context.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(context.destination);
+
+            // Create a simple beep based on the sound type
+            const frequencies = {
+                eat: [200, 400],
+                collect: [800, 1200],
+                sleep: [150, 300],
+                wake: [600, 800],
+                clean: [400, 600],
+                sparkle: [1000, 1500],
+                play: [300, 500],
+                fun: [250, 500],
+                pop: [100, 200],
+                snap: [400, 600],
+                alert: [300, 600],
+            };
+
+            const freq = frequencies[soundName]
+                ? frequencies[soundName][0]
+                : 440;
+
+            oscillator.frequency.setValueAtTime(freq, context.currentTime);
+            oscillator.type = "sine";
+
+            gainNode.gain.setValueAtTime(0, context.currentTime);
+            gainNode.gain.linearRampToValueAtTime(
+                volume / 100,
+                context.currentTime + 0.01
+            );
+            gainNode.gain.exponentialRampToValueAtTime(
+                0.001,
+                context.currentTime + 0.3
             );
 
-            for (let i = 0; i < maxLength; i++) {
-                const oscillator = context.createOscillator();
-                const gainNode = context.createGain();
-                const filter = context.createBiquadFilter();
+            oscillator.start(context.currentTime);
+            oscillator.stop(context.currentTime + 0.3);
 
-                oscillator.connect(gainNode);
-                gainNode.connect(filter);
-                filter.connect(context.destination);
-
-                const freq = config.frequencies[i] || config.frequencies[0];
-                const waveform = config.waveforms[i] || config.waveforms[0];
-                const duration = config.durations[i] || config.durations[0];
-                const delay = config.delays[i] || 0;
-                const volume = config.volumes[i] || config.volumes[0];
-                const filterType = config.filters[i] || config.filters[0];
-
-                oscillator.frequency.setValueAtTime(freq, context.currentTime);
-                oscillator.type = waveform;
-
-                gainNode.gain.setValueAtTime(0, context.currentTime);
-                gainNode.gain.linearRampToValueAtTime(
-                    Math.max(0.001, Math.min(1, volume * (volume / 100))),
-                    context.currentTime + 0.01
-                );
-                gainNode.gain.exponentialRampToValueAtTime(
-                    0.001,
-                    context.currentTime + duration
-                );
-
-                if (filterType) {
-                    filter.type = filterType;
-                    filter.frequency.setValueAtTime(
-                        freq * 2,
-                        context.currentTime
-                    );
-                }
-
-                oscillator.start(context.currentTime + delay);
-                oscillator.stop(context.currentTime + delay + duration);
-            }
-
-            console.log(
-                `✅ Complex sound generated via Web Audio API: ${soundName}`
+            console.log(`✅ Simple fallback sound generated: ${soundName}`);
+        } catch (fallbackError) {
+            console.error(
+                `❌ All sound methods failed for ${soundName}:`,
+                fallbackError
             );
-        } catch (error) {
-            console.log(`❌ Web Audio API failed: ${error.message}`);
-
-            // Tier 3: Simple HTML5 Audio fallback
-            try {
-                const audioData = this.createWAV(
-                    [0.1, 0.2, 0.1, 0.05, 0.02],
-                    44100
-                );
-                const blob = new Blob([audioData], { type: "audio/wav" });
-                const url = URL.createObjectURL(blob);
-                const audio = new Audio(url);
-                audio.volume = volume / 100;
-                await audio.play();
-                URL.revokeObjectURL(url);
-                console.log(`✅ Simple fallback sound played: ${soundName}`);
-            } catch (fallbackError) {
-                console.error(
-                    `❌ All sound methods failed for ${soundName}:`,
-                    fallbackError
-                );
-            }
         }
     }
 
@@ -268,39 +167,6 @@ class PetSoundManager {
             }
             await this.playSound(sound.name, sound.volume);
         }
-    }
-
-    createWAV(audioData, sampleRate) {
-        const buffer = new ArrayBuffer(44 + audioData.length * 2);
-        const view = new DataView(buffer);
-
-        // WAV header
-        const writeString = (offset, string) => {
-            for (let i = 0; i < string.length; i++) {
-                view.setUint8(offset + i, string.charCodeAt(i));
-            }
-        };
-
-        writeString(0, "RIFF");
-        view.setUint32(4, 36 + audioData.length * 2, true);
-        writeString(8, "WAVE");
-        writeString(12, "fmt ");
-        view.setUint32(16, 16, true);
-        view.setUint16(20, 1, true);
-        view.setUint16(22, 1, true);
-        view.setUint32(24, sampleRate, true);
-        view.setUint32(28, sampleRate * 2, true);
-        view.setUint16(32, 2, true);
-        view.setUint16(34, 16, true);
-        writeString(36, "data");
-        view.setUint32(40, audioData.length * 2, true);
-
-        // Audio data
-        for (let i = 0; i < audioData.length; i++) {
-            view.setInt16(44 + i * 2, audioData[i] * 32767, true);
-        }
-
-        return buffer;
     }
 
     testSounds() {
@@ -940,11 +806,11 @@ class Stage extends React.Component {
                     1500
                 );
 
-                // Play layered sounds for playing
+                // Play layered sounds for playing with pet
                 console.log("🎮 Playing layered sounds for playing with pet");
                 await this.soundManager.playLayeredSounds([
                     { name: "play", volume: 80, delay: 0 },
-                    { name: "fun", volume: 60, delay: 200 },
+                    { name: "fun", volume: 60, delay: 300 },
                 ]);
             }
         );

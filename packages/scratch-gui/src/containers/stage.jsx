@@ -437,7 +437,6 @@ class Stage extends React.Component {
             funFactVisible: false,
             isSick: false,
             medicineCount: 0,
-            sicknessCooldown: 0,
             petEnabled: false,
             petSpriteName: this.getPetSpriteName(props),
         };
@@ -513,7 +512,6 @@ class Stage extends React.Component {
             this.state.energy !== nextState.energy ||
             this.state.isSick !== nextState.isSick ||
             this.state.medicineCount !== nextState.medicineCount ||
-            this.state.sicknessCooldown !== nextState.sicknessCooldown ||
             this.state.petReactionMessage !== nextState.petReactionMessage ||
             this.state.petSpeechMessage !== nextState.petSpeechMessage ||
             this.state.petSpeechVisible !== nextState.petSpeechVisible ||
@@ -982,7 +980,6 @@ class Stage extends React.Component {
         this.setState(
             (prevState) => ({
                 isSick: false,
-                sicknessCooldown: 30, // 30 second cooldown before can get sick again
                 collectedFood: prevState.collectedFood - 2, // Use 2 food items
                 hunger: Math.max(0, prevState.hunger - 30), // Medicine also feeds
                 cleanliness: Math.min(100, prevState.cleanliness + 20), // Medicine also cleans
@@ -1195,7 +1192,7 @@ class Stage extends React.Component {
         let shouldShow = false;
 
         // Check for sickness first
-        if (cleanliness < 20 && !isSick && this.state.sicknessCooldown <= 0) {
+        if (cleanliness < 20 && !isSick) {
             this.setState({
                 isSick: true,
                 petSpeechMessage: "I'm very sick! I need medicine! 🤒💊",
@@ -1251,16 +1248,11 @@ class Stage extends React.Component {
             );
             const newHappiness = Math.max(0, prevState.happiness - 0.1);
             const newEnergy = Math.max(0, prevState.energy - 0.1);
-            const newSicknessCooldown = Math.max(
-                0,
-                prevState.sicknessCooldown - 1
-            ); // Decrease cooldown by 1 second
             return {
                 hunger: newHunger,
                 cleanliness: newCleanliness,
                 happiness: newHappiness,
                 energy: newEnergy,
-                sicknessCooldown: newSicknessCooldown,
             };
         });
     }

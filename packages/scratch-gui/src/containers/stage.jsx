@@ -142,6 +142,7 @@ class PetSoundManager {
             alert: "8468b9b3f11a665ee4d215afd8463b97", // Referee Whistle (perfect for alert!)
             snap: "d55b3954d72c6275917f375e49b502f3", // Tap Snare
             tap: "de5b41c7080396986873d97e9e47acf6", // Wood Tap
+            magic: "89691587a169d935a58c48c3d4e78534", // Birthday (WAV format)
         };
     }
 
@@ -996,9 +997,9 @@ class Stage extends React.Component {
                     2000
                 );
 
-                // Play healing sound (using clean sound for now)
+                // Play magical healing sound
                 await this.soundManager.playLayeredSounds([
-                    { name: "clean", volume: 80, delay: 0 },
+                    { name: "magic", volume: 80, delay: 0 },
                     { name: "sparkle", volume: 60, delay: 300 },
                 ]);
             }

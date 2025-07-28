@@ -20,6 +20,7 @@ import feedIcon from "./icon--feed.svg";
 import playIcon from "./icon--play.svg";
 import cleanIcon from "./icon--clean.svg";
 import sleepIcon from "./icon--sleep.svg";
+import medicineIcon from "./icon--medicine.svg";
 
 const StageComponent = (props) => {
     const {
@@ -58,6 +59,8 @@ const StageComponent = (props) => {
         sleepCountdown,
         currentFunFact,
         funFactVisible,
+        isSick,
+        medicineCount,
         disableFeed,
         disablePlay,
         disableClean,
@@ -291,15 +294,22 @@ const StageComponent = (props) => {
                             {/* Pet Interaction Buttons */}
                             <div className={styles.petButtonRow}>
                                 <ButtonComponent
-                                    iconSrc={feedIcon}
+                                    iconSrc={
+                                        isSick && collectedFood >= 2
+                                            ? medicineIcon
+                                            : feedIcon
+                                    }
                                     onClick={onFeedPet}
                                     disabled={
-                                        collectedFood <= 0 ||
+                                        (isSick && collectedFood < 2) ||
+                                        (!isSick && collectedFood <= 0) ||
                                         isSleeping ||
                                         disableFeed
                                     }
                                 >
-                                    Feed ({collectedFood})
+                                    {isSick && collectedFood >= 2
+                                        ? "Medicine"
+                                        : `Feed (${collectedFood})`}
                                 </ButtonComponent>
                                 <ButtonComponent
                                     iconSrc={playIcon}
@@ -337,6 +347,17 @@ const StageComponent = (props) => {
                                         visible={funFactVisible}
                                         className={styles.sleepFunFact}
                                     />
+                                </div>
+                            )}
+                            {isSick && !anyModalVisible && (
+                                <div className={styles.sickOverlay}>
+                                    <span role="img" aria-label="sick">
+                                        🤒
+                                    </span>{" "}
+                                    Pet is sick! Need medicine!
+                                    <div className={styles.sickMessage}>
+                                        Collect 2 food items to make medicine
+                                    </div>
                                 </div>
                             )}
                         </>
@@ -461,6 +482,8 @@ StageComponent.propTypes = {
     sleepCountdown: PropTypes.number,
     currentFunFact: PropTypes.string,
     funFactVisible: PropTypes.bool,
+    isSick: PropTypes.bool,
+    medicineCount: PropTypes.number,
     disableFeed: PropTypes.bool,
     disablePlay: PropTypes.bool,
     disableClean: PropTypes.bool,

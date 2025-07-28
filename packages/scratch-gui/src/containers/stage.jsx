@@ -1194,7 +1194,7 @@ class Stage extends React.Component {
         let shouldShow = false;
 
         // Check for sickness first
-        if (cleanliness < 40 && !isSick && this.state.sicknessCooldown <= 0) {
+        if (cleanliness < 20 && !isSick && this.state.sicknessCooldown <= 0) {
             this.setState({
                 isSick: true,
                 petSpeechMessage: "I'm very sick! I need medicine! 🤒💊",

@@ -133,7 +133,7 @@ class PetSoundManager {
             collect: "83a9787d4cb6f3b7632b4ddfebf74367", // Pop (proven to work)
             sleep: "a634fcb87894520edbd7a534d1479ec4", // Clock Ticking (perfect for sleep!)
             wake: "28c76b6bebd04be1383fe9ba4933d263", // Computer Beep
-            clean: "83a9787d4cb6f3b7632b4ddfebf74367", // Pop (proven to work)
+            clean: "e1f32c057411da4237181ce72ae15d23", // Wub Beatbox
             sparkle: "78b0be9c9c2f664158b886bc7e794095", // Bubbles (bubbly sound for sparkle)
             water: "e133e625fd367d269e76964d4b722fc2", // Water Drop
             play: "0039635b1d6853face36581784558454", // Bite (proven to work)

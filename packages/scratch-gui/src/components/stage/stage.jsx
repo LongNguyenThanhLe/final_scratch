@@ -15,6 +15,7 @@ import { getStageDimensions } from "../../lib/screen-utils.js";
 import styles from "./stage.css";
 import ButtonComponent from "../button/button.jsx";
 import Switch from "../button/switch.jsx";
+import FunFact from "../fun-fact/fun-fact.jsx";
 import feedIcon from "./icon--feed.svg";
 import playIcon from "./icon--play.svg";
 import cleanIcon from "./icon--clean.svg";
@@ -55,6 +56,8 @@ const StageComponent = (props) => {
         onWasteClick,
         isSleeping,
         sleepCountdown,
+        currentFunFact,
+        funFactVisible,
         disableFeed,
         disablePlay,
         disableClean,
@@ -329,6 +332,11 @@ const StageComponent = (props) => {
                                     <div className={styles.sleepCountdown}>
                                         ({sleepCountdown})
                                     </div>
+                                    <FunFact
+                                        fact={currentFunFact}
+                                        visible={funFactVisible}
+                                        className={styles.sleepFunFact}
+                                    />
                                 </div>
                             )}
                         </>
@@ -451,6 +459,8 @@ StageComponent.propTypes = {
     onWasteClick: PropTypes.func,
     isSleeping: PropTypes.bool,
     sleepCountdown: PropTypes.number,
+    currentFunFact: PropTypes.string,
+    funFactVisible: PropTypes.bool,
     disableFeed: PropTypes.bool,
     disablePlay: PropTypes.bool,
     disableClean: PropTypes.bool,

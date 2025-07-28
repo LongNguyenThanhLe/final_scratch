@@ -20,6 +20,110 @@ import {
 const colorPickerRadius = 20;
 const dragThreshold = 3; // Same as the block drag threshold
 
+// Animal facts array for sleep time fun facts
+const ANIMAL_FACTS = [
+    "A group of flamingos is called a **flamboyance**! 🦩",
+    "Koalas have **fingerprints** that are nearly identical to humans! 🐨",
+    "Dolphins **call each other by name** with signature whistles! 🐬",
+    'Elephants can **"hear" with their feet**—they pick up vibrations through the ground! 🐘',
+    "A group of hedgehogs is called a **prickle**! 🦔",
+    "Cows have **best friends** and get stressed when separated! 🐮",
+    "Otters hold hands while sleeping to **keep from drifting apart**! 🦦",
+    "A newborn kangaroo is the size of a **jellybean**! 🦘",
+    "Sloths only poop once a week—and it's a dangerous trip! 🦥",
+    "Bats always turn **left** when exiting a cave! 🦇",
+    "Owls can rotate their heads up to **270 degrees**! 🦉",
+    "The heart of a hummingbird beats up to **1,200 times per minute**! 🐦",
+    "Penguins propose with **pebbles**! 🐧",
+    "The wandering albatross has a wingspan of up to **12 feet**! 🦅",
+    "Parrots can live over **60 years** and mimic human speech! 🦜",
+    "The male lyrebird can imitate **chainsaws, car alarms, and other birds**! 🎵",
+    "Chickens have over **100 distinct vocalizations**! 🐔",
+    "Crows are incredibly smart and can **hold grudges**! 🐦",
+    "The bee hummingbird is the **smallest bird in the world**—about the size of a bee! 🐝",
+    "Pigeons can recognize themselves in a **mirror**! 🕊️",
+    "Chameleons change color mostly to **communicate**, not to camouflage! 🦎",
+    "Some lizards can **squirt blood from their eyes** as a defense mechanism! 🦎",
+    "A group of frogs is called an **army**! 🐸",
+    "Frogs can **breathe through their skin**! 🐸",
+    "Sea turtles can hold their breath for **hours** underwater! 🐢",
+    "The axolotl can **regrow its heart, brain, and limbs**! 🦎",
+    "Alligators can live up to **100 years** in the wild! 🐊",
+    "Some snakes can **fly** by gliding from tree to tree! 🐍",
+    "Crocodiles can't stick their **tongues out**! 🐊",
+    "Toads don't drink water—they **absorb it through their skin**! 🐸",
+    "Octopuses have **three hearts**! 🐙",
+    "Starfish have no **brain or blood**! ⭐",
+    "Clownfish can **change gender**! 🐠",
+    "Jellyfish existed before **dinosaurs**! 🦑",
+    "Seahorses are the only species where the **males get pregnant**! 🐎",
+    "Sharks have been around for over **400 million years**! 🦈",
+    "Some deep-sea fish have **transparent heads**! 🐟",
+    "A shrimp's heart is in its **head**! 🦐",
+    "Lobsters taste with their **legs**! 🦞",
+    "Some fish can **glow in the dark** (bioluminescence)! ✨",
+    "Honey never spoils—**archaeologists found 3,000-year-old edible honey**! 🍯",
+    "Ants can lift **50 times their body weight**! 🐜",
+    "Dragonflies can fly **backwards**! 🦗",
+    "A butterfly tastes with its **feet**! 🦋",
+    "Some beetles shoot **boiling chemicals** as a defense! 🪲",
+    "Bees can recognize **human faces**! 🐝",
+    "Termites never sleep and can build **massive towers**! 🏗️",
+    "There are over **1 million** known species of insects! 🐛",
+    "Fireflies aren't flies—they're actually **beetles**! ✨",
+    "Ladybugs eat up to **5,000 aphids** in their lifetime! 🐞",
+    "Platypuses **glow under UV light**! 🦆",
+    "Wombat poop is **cube-shaped**! 🦘",
+    "Tardigrades can survive in **space, boiling water, and freezing**! 🦠",
+    "Some jellyfish are biologically **immortal**! 🦑",
+    "Naked mole rats don't feel **pain** from acid or capsaicin! 🐀",
+    "A snail can sleep for **3 years**! 🐌",
+    "Manatees use their **farts to swim**! 🐋",
+    "A blue whale's heart is the size of a **small car**! 🐋",
+    "Camels have **three eyelids** to protect against sand! 🐪",
+    "Giraffes only sleep **about 30 minutes a day**! 🦒",
+    "A group of crows is called a **murder**! 🐦",
+    "A group of owls is a **parliament**! 🦉",
+    "A group of frogs is an **army**! 🐸",
+    "A group of zebras is a **dazzle**! 🦓",
+    "A group of cats is a **clowder**! 🐱",
+    "A group of rhinos is a **crash**! 🦏",
+    "A group of jellyfish is a **smack**! 🦑",
+    "A group of porcupines is a **prickle**! 🦔",
+    "A group of apes is a **shrewdness**! 🦍",
+    "A group of flamingos is a **flamboyance**! 🦩",
+    "Crows make and use **tools**! 🐦",
+    "Elephants **mourn** their dead! 🐘",
+    "Rats can **laugh** when tickled! 🐀",
+    "Dogs can learn over **1,000 words**! 🐕",
+    "Orcas are the **smartest apex predators**! 🐋",
+    "Pigs are smarter than **dogs**! 🐷",
+    "Parrots can do basic **math**! 🦜",
+    "Dolphins can recognize themselves in a **mirror**! 🐬",
+    "Octopuses can solve **mazes and puzzles**! 🐙",
+    "Horses can read **human emotions**! 🐎",
+    "The fastest land animal is the **cheetah**—up to 70 mph! 🐆",
+    "The slowest is the **sloth**, moving ~0.15 mph! 🦥",
+    "The loudest animal is the **sperm whale**—over 230 decibels! 🐋",
+    "The tiniest mammal is the **bumblebee bat**! 🦇",
+    "The tallest animal is the **giraffe**! 🦒",
+    "The biggest animal ever is the **blue whale**! 🐋",
+    "The strongest bite belongs to the **saltwater crocodile**! 🐊",
+    "The most venomous animal is the **box jellyfish**! 🦑",
+    "The longest-living mammal is the **bowhead whale** (~200 years)! 🐋",
+    "The hottest blooded fish is the **opah**, which regulates heat! 🐟",
+    "Horses can't **vomit**! 🐎",
+    "A cat can make over **100 different sounds**! 🐱",
+    "Male seahorses **give birth**! 🐎",
+    "Armadillos can **hold their breath for 6 minutes**! 🦔",
+    "Penguins can **drink salt water**! 🐧",
+    "Zebras' stripes confuse **biting flies**! 🦓",
+    "Some birds can **sleep while flying**! 🐦",
+    "Frogs can freeze in winter and **thaw alive**! 🐸",
+    "Dogs can smell **disease and emotions**! 🐕",
+    "Some ants **farm** fungus and livestock (aphids)! 🐜",
+];
+
 // PetSoundManager class for handling sound effects
 class PetSoundManager {
     constructor(vm) {
@@ -326,6 +430,8 @@ class Stage extends React.Component {
             wasteItems: [],
             isSleeping: false,
             sleepCountdown: 0,
+            currentFunFact: "",
+            funFactVisible: false,
             petEnabled: false,
             petSpriteName: this.getPetSpriteName(props),
         };
@@ -409,6 +515,8 @@ class Stage extends React.Component {
             this.state.wasteItems !== nextState.wasteItems ||
             this.state.isSleeping !== nextState.isSleeping ||
             this.state.sleepCountdown !== nextState.sleepCountdown ||
+            this.state.currentFunFact !== nextState.currentFunFact ||
+            this.state.funFactVisible !== nextState.funFactVisible ||
             this.state.petEnabled !== nextState.petEnabled
         );
     }
@@ -439,6 +547,7 @@ class Stage extends React.Component {
         clearInterval(this.petNeedsInterval);
         clearInterval(this.wasteSpawnInterval);
         clearInterval(this.sleepInterval);
+        clearInterval(this.funFactInterval);
         clearTimeout(this.speechTimeout);
         clearTimeout(this.reactionTimeout);
         this.props.vm.runtime.removeListener("QUESTION", this.questionListener);
@@ -925,10 +1034,16 @@ class Stage extends React.Component {
     async handleSleepPet() {
         if (this.state.isSleeping) return;
 
+        // Get a random fun fact to start with
+        const randomFact =
+            ANIMAL_FACTS[Math.floor(Math.random() * ANIMAL_FACTS.length)];
+
         this.setState(
             (prevState) => ({
                 isSleeping: true,
                 sleepCountdown: 30,
+                currentFunFact: randomFact,
+                funFactVisible: true,
                 hunger: Math.max(0, prevState.hunger - 5),
                 petReactionMessage: "Zzz... 😴",
             }),
@@ -942,11 +1057,28 @@ class Stage extends React.Component {
                 // Play sleep sound
                 await this.soundManager.playSound("sleep", 60);
 
+                // Start fun fact rotation every 5 seconds
+                this.funFactInterval = setInterval(() => {
+                    const newFact =
+                        ANIMAL_FACTS[
+                            Math.floor(Math.random() * ANIMAL_FACTS.length)
+                        ];
+                    this.setState({
+                        currentFunFact: newFact,
+                        funFactVisible: false,
+                    });
+                    // Show the new fact after a brief fade
+                    setTimeout(() => {
+                        this.setState({ funFactVisible: true });
+                    }, 300);
+                }, 5000);
+
                 clearInterval(this.sleepInterval);
                 this.sleepInterval = setInterval(() => {
                     this.setState((prevState) => {
                         if (prevState.sleepCountdown <= 1) {
                             clearInterval(this.sleepInterval);
+                            clearInterval(this.funFactInterval);
 
                             // Play wake sound when sleep ends
                             this.soundManager.playSound("wake", 70);
@@ -954,6 +1086,8 @@ class Stage extends React.Component {
                             return {
                                 isSleeping: false,
                                 sleepCountdown: 0,
+                                currentFunFact: "",
+                                funFactVisible: false,
                                 energy: 100,
                             };
                         }
@@ -1210,6 +1344,8 @@ class Stage extends React.Component {
                 wasteItems={this.state.wasteItems}
                 isSleeping={this.state.isSleeping}
                 sleepCountdown={this.state.sleepCountdown}
+                currentFunFact={this.state.currentFunFact}
+                funFactVisible={this.state.funFactVisible}
                 petEnabled={this.state.petEnabled}
                 onFeedPet={this.handleFeedPet}
                 onPlayWithPet={this.handlePlayWithPet}

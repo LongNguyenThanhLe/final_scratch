@@ -142,6 +142,7 @@ class PetSoundManager {
             alert: "8468b9b3f11a665ee4d215afd8463b97", // Referee Whistle (perfect for alert!)
             snap: "d55b3954d72c6275917f375e49b502f3", // Tap Snare
             tap: "de5b41c7080396986873d97e9e47acf6", // Wood Tap
+            magic: "89691587a169d935a58c48c3d4e78534", // Birthday (WAV format)
         };
     }
 
@@ -434,6 +435,8 @@ class Stage extends React.Component {
             sleepCountdown: 0,
             currentFunFact: "",
             funFactVisible: false,
+            isSick: false,
+            medicineCount: 0,
             petEnabled: false,
             petSpriteName: this.getPetSpriteName(props),
         };
@@ -507,6 +510,8 @@ class Stage extends React.Component {
             this.state.cleanliness !== nextState.cleanliness ||
             this.state.happiness !== nextState.happiness ||
             this.state.energy !== nextState.energy ||
+            this.state.isSick !== nextState.isSick ||
+            this.state.medicineCount !== nextState.medicineCount ||
             this.state.petReactionMessage !== nextState.petReactionMessage ||
             this.state.petSpeechMessage !== nextState.petSpeechMessage ||
             this.state.petSpeechVisible !== nextState.petSpeechVisible ||
@@ -905,6 +910,23 @@ class Stage extends React.Component {
     // - prop passing to StageComponent
     async handleFeedPet() {
         if (this.state.isSleeping) return;
+
+        // Check if pet is sick and we have enough food for medicine
+        if (this.state.isSick && this.state.collectedFood >= 2) {
+            await this.handleGiveMedicine();
+            return;
+        }
+
+        if (this.state.isSick) {
+            this.setState({
+                petSpeechMessage: "I need 2 food items to make medicine! 🤒💊",
+                petSpeechVisible: true,
+            });
+            clearTimeout(this.speechTimeout);
+            this.speechTimeout = setTimeout(this.clearPetSpeech, 3000);
+            return;
+        }
+
         if (this.state.energy < 2) {
             this.setState({
                 petSpeechMessage: "I'm too tired to eat!",
@@ -953,8 +975,46 @@ class Stage extends React.Component {
             }
         );
     }
+
+    async handleGiveMedicine() {
+        this.setState(
+            (prevState) => ({
+                isSick: false,
+                collectedFood: prevState.collectedFood - 2, // Use 2 food items
+                hunger: Math.max(0, prevState.hunger - 30), // Medicine also feeds
+                cleanliness: Math.min(100, prevState.cleanliness + 20), // Medicine also cleans
+                energy: Math.min(100, prevState.energy + 30), // Medicine restores energy
+                happiness: Math.min(100, prevState.happiness + 15), // Medicine makes happy
+                petReactionMessage: "Medicine worked! I feel much better! 💊✨",
+            }),
+            async () => {
+                clearTimeout(this.reactionTimeout);
+                this.reactionTimeout = setTimeout(
+                    this.clearPetReactionMessage,
+                    2000
+                );
+
+                // Play magical healing sound
+                await this.soundManager.playLayeredSounds([
+                    { name: "magic", volume: 80, delay: 0 },
+                    { name: "sparkle", volume: 60, delay: 300 },
+                ]);
+            }
+        );
+    }
+
     async handlePlayWithPet() {
         if (this.state.isSleeping) return;
+        if (this.state.isSick) {
+            this.setState({
+                petSpeechMessage:
+                    "I'm too sick to play! I need medicine first! 🤒",
+                petSpeechVisible: true,
+            });
+            clearTimeout(this.speechTimeout);
+            this.speechTimeout = setTimeout(this.clearPetSpeech, 3000);
+            return;
+        }
         if (this.state.hunger > 80) {
             this.setState({
                 petSpeechMessage:
@@ -1001,6 +1061,16 @@ class Stage extends React.Component {
     }
     async handleCleanPet() {
         if (this.state.isSleeping) return;
+        if (this.state.isSick) {
+            this.setState({
+                petSpeechMessage:
+                    "I'm too sick to be cleaned! I need medicine first! 🤒",
+                petSpeechVisible: true,
+            });
+            clearTimeout(this.speechTimeout);
+            this.speechTimeout = setTimeout(this.clearPetSpeech, 3000);
+            return;
+        }
         if (this.state.energy < 10) {
             this.setState({
                 petSpeechMessage:
@@ -1035,6 +1105,16 @@ class Stage extends React.Component {
     }
     async handleSleepPet() {
         if (this.state.isSleeping) return;
+        if (this.state.isSick) {
+            this.setState({
+                petSpeechMessage:
+                    "I'm too sick to sleep properly! I need medicine first! 🤒",
+                petSpeechVisible: true,
+            });
+            clearTimeout(this.speechTimeout);
+            this.speechTimeout = setTimeout(this.clearPetSpeech, 3000);
+            return;
+        }
 
         // Get a random fun fact to start with
         const randomFact =
@@ -1107,11 +1187,27 @@ class Stage extends React.Component {
         this.setState({ petReactionMessage: null });
     }
     checkPetNeeds() {
-        const { hunger, cleanliness, happiness, energy } = this.state;
+        const { hunger, cleanliness, happiness, energy, isSick } = this.state;
         let message = "";
         let shouldShow = false;
 
-        if (hunger > 70) {
+        // Check for sickness first
+        if (cleanliness < 20 && !isSick) {
+            this.setState({
+                isSick: true,
+                petSpeechMessage: "I'm very sick! I need medicine! 🤒💊",
+                petSpeechVisible: true,
+            });
+            clearTimeout(this.speechTimeout);
+            this.speechTimeout = setTimeout(this.clearPetSpeech, 4000);
+            return;
+        }
+
+        // If sick, only show sickness message
+        if (isSick) {
+            message = "I'm very sick! I need medicine! 🤒💊";
+            shouldShow = true;
+        } else if (hunger > 70) {
             message = "I'm starving! 🍽️";
             shouldShow = true;
         } else if (cleanliness < 30) {
@@ -1348,6 +1444,8 @@ class Stage extends React.Component {
                 sleepCountdown={this.state.sleepCountdown}
                 currentFunFact={this.state.currentFunFact}
                 funFactVisible={this.state.funFactVisible}
+                isSick={this.state.isSick}
+                medicineCount={this.state.medicineCount}
                 petEnabled={this.state.petEnabled}
                 onFeedPet={this.handleFeedPet}
                 onPlayWithPet={this.handlePlayWithPet}

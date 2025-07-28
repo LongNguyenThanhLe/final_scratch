@@ -136,8 +136,8 @@ class PetSoundManager {
             clean: "83a9787d4cb6f3b7632b4ddfebf74367", // Pop (proven to work)
             sparkle: "78b0be9c9c2f664158b886bc7e794095", // Bubbles (bubbly sound for sparkle)
             water: "e133e625fd367d269e76964d4b722fc2", // Water Drop
-            play: "83a9787d4cb6f3b7632b4ddfebf74367", // Pop (proven to work)
-            fun: "170e05c29d50918ae0b482c2955768c0", // Cheer (perfect for fun!)
+            play: "0039635b1d6853face36581784558454", // Bite (proven to work)
+            fun: "684ffae7bc3a65e35e9f0aaf7a579dd5", // Clapping
             pop: "83a9787d4cb6f3b7632b4ddfebf74367", // Pop
             alert: "8468b9b3f11a665ee4d215afd8463b97", // Referee Whistle (perfect for alert!)
             snap: "d55b3954d72c6275917f375e49b502f3", // Tap Snare
@@ -167,7 +167,8 @@ class PetSoundManager {
             // For known ADPCM sounds, try ADPCM format first
             const adpcmSounds = {
                 sleep: "a634fcb87894520edbd7a534d1479ec4", // Clock Ticking
-                fun: "170e05c29d50918ae0b482c2955768c0", // Cheer
+                play: "0039635b1d6853face36581784558454", // Bite
+                // fun: "1e8e7fb94103282d02a4bb597248c788", // Laugh1 (WAV format, not ADPCM)
                 alert: "8468b9b3f11a665ee4d215afd8463b97", // Referee Whistle
                 sparkle: "78b0be9c9c2f664158b886bc7e794095", // Bubbles
                 water: "e133e625fd367d269e76964d4b722fc2", // Water Drop
@@ -343,14 +344,15 @@ class PetSoundManager {
     }
 
     async playLayeredSounds(sounds) {
-        for (const sound of sounds) {
+        const promises = sounds.map(async (sound) => {
             if (sound.delay) {
                 await new Promise((resolve) =>
                     setTimeout(resolve, sound.delay)
                 );
             }
-            await this.playSound(sound.name, sound.volume);
-        }
+            return this.playSound(sound.name, sound.volume);
+        });
+        await Promise.all(promises);
     }
 
     testSounds() {
@@ -991,8 +993,8 @@ class Stage extends React.Component {
 
                 // Play layered sounds for playing with pet
                 await this.soundManager.playLayeredSounds([
-                    { name: "play", volume: 90, delay: 0 },
-                    { name: "fun", volume: 70, delay: 150 },
+                    { name: "pop", volume: 80, delay: 0 },
+                    { name: "fun", volume: 60, delay: 200 },
                 ]);
             }
         );

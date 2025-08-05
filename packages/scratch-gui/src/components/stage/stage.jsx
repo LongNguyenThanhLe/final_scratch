@@ -279,7 +279,7 @@ const StageComponent = (props) => {
                                         left: "50%",
                                         bottom: "2.5rem", // Even closer to the button bar
                                         transform: "translateX(-50%)",
-                                        zIndex: 1000,
+                                        zIndex: 50, // Lower than food items (100) so they remain clickable
                                     }}
                                 >
                                     {petSpeechMessage}

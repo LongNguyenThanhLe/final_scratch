@@ -982,7 +982,7 @@ class Stage extends React.Component {
                 isSick: false,
                 collectedFood: prevState.collectedFood - 2, // Use 2 food items
                 hunger: Math.max(0, prevState.hunger - 30), // Medicine also feeds
-                cleanliness: Math.min(100, prevState.cleanliness + 20), // Medicine also cleans
+                cleanliness: 50, // Medicine recovers cleanliness to half
                 energy: Math.min(100, prevState.energy + 30), // Medicine restores energy
                 happiness: Math.min(100, prevState.happiness + 15), // Medicine makes happy
                 petReactionMessage: "Medicine worked! I feel much better! 💊✨",

@@ -482,6 +482,12 @@ class Stage extends React.Component {
             "PET_PLAYED_WITH",
             this.handlePetPlayedWith
         );
+        // Listen for pet automation events from VM
+        this.props.vm.runtime.addListener("PET_AUTO_FEED", this.handleAutoFeed);
+        this.props.vm.runtime.addListener(
+            "PET_AUTO_COLLECT_FOOD",
+            this.handleAutoCollectFood
+        );
         // Start food spawn interval every 20s
         this.foodSpawnInterval = setInterval(() => this.spawnFood(), 20000);
         // Start stat decay interval every 1s for smooth animation
@@ -561,6 +567,14 @@ class Stage extends React.Component {
         this.props.vm.runtime.removeListener(
             "PET_PLAYED_WITH",
             this.handlePetPlayedWith
+        );
+        this.props.vm.runtime.removeListener(
+            "PET_AUTO_FEED",
+            this.handleAutoFeed
+        );
+        this.props.vm.runtime.removeListener(
+            "PET_AUTO_COLLECT_FOOD",
+            this.handleAutoCollectFood
         );
     }
     questionListener(question) {
@@ -1257,15 +1271,36 @@ class Stage extends React.Component {
         });
     }
     handleTargetsUpdate() {
-        // This is a placeholder for the pet's position update.
-        // In a real VM, this would involve extracting the pet's position
-        // from the VM's state and updating this.state.petX/Y.
-        // For now, we'll just update the pet's position on the canvas.
-        // This requires the pet sprite to be a drawable and its position
-        // to be managed by the VM's state.
-        // Example: const petDrawableId = this.props.vm.runtime.getTargetById('pet').drawableId;
-        // const petPosition = this.props.vm.runtime.getTargetById('pet').x;
-        // this.setState({ petX: petPosition, petY: 0 }); // Assuming petY is 0 for now
+        // Update pet position based on current editing target
+        const editingTarget = this.props.editingTarget;
+        if (editingTarget && editingTarget.sprite) {
+            const spriteName = editingTarget.sprite.name;
+            if (spriteName === this.state.petSpriteName) {
+                this.setState({
+                    petX: editingTarget.x,
+                    petY: editingTarget.y,
+                });
+            }
+        }
+
+        // Update VM targets with pet state for extension blocks
+        this.updatePetStateInVM();
+    }
+
+    updatePetStateInVM() {
+        if (!this.state.petEnabled) return;
+
+        // Update all targets with current pet state
+        const targets = this.props.vm.runtime.targets;
+        targets.forEach((target) => {
+            target.petFoodCount = this.state.collectedFood;
+            target.petHunger = this.state.hunger;
+            target.petCleanliness = this.state.cleanliness;
+            target.petEnergy = this.state.energy;
+            target.petHappiness = this.state.happiness;
+            target.petIsSick = this.state.isSick;
+            target.petIsSleeping = this.state.isSleeping;
+        });
     }
     spawnFood() {
         this.setState((prevState) => {
@@ -1411,6 +1446,23 @@ class Stage extends React.Component {
         if (target && target.sprite) {
             console.log("Pet sprite set to:", target.sprite.name); // Debug log
             this.setState({ petSpriteName: target.sprite.name });
+        }
+    };
+
+    // Handler for automatic feeding from VM blocks
+    handleAutoFeed = () => {
+        if (!this.state.petEnabled) return;
+        this.handleFeedPet();
+    };
+
+    // Handler for automatic food collection from VM blocks
+    handleAutoCollectFood = () => {
+        if (!this.state.petEnabled) return;
+
+        // Find the first available food item and collect it
+        if (this.state.foodItems && this.state.foodItems.length > 0) {
+            const firstFood = this.state.foodItems[0];
+            this.collectFood(firstFood.id);
         }
     };
     render() {

@@ -1,50 +1,55 @@
-import React from 'react';
-import {FormattedMessage} from 'react-intl';
+import React from "react";
+import { FormattedMessage } from "react-intl";
 
-import musicIconURL from './music/music.png';
-import musicInsetIconURL from './music/music-small.svg';
+import musicIconURL from "./music/music.png";
+import musicInsetIconURL from "./music/music-small.svg";
 
-import penIconURL from './pen/pen.png';
-import penInsetIconURL from './pen/pen-small.svg';
+import penIconURL from "./pen/pen.png";
+import penInsetIconURL from "./pen/pen-small.svg";
 
-import videoSensingIconURL from './videoSensing/video-sensing.png';
-import videoSensingInsetIconURL from './videoSensing/video-sensing-small.svg';
+import videoSensingIconURL from "./videoSensing/video-sensing.png";
+import videoSensingInsetIconURL from "./videoSensing/video-sensing-small.svg";
 
-import text2speechIconURL from './text2speech/text2speech.png';
-import text2speechInsetIconURL from './text2speech/text2speech-small.svg';
+import text2speechIconURL from "./text2speech/text2speech.png";
+import text2speechInsetIconURL from "./text2speech/text2speech-small.svg";
 
-import translateIconURL from './translate/translate.png';
-import translateInsetIconURL from './translate/translate-small.png';
+import translateIconURL from "./translate/translate.png";
+import translateInsetIconURL from "./translate/translate-small.png";
 
-import makeymakeyIconURL from './makeymakey/makeymakey.png';
-import makeymakeyInsetIconURL from './makeymakey/makeymakey-small.svg';
+import makeymakeyIconURL from "./makeymakey/makeymakey.png";
+import makeymakeyInsetIconURL from "./makeymakey/makeymakey-small.svg";
 
-import microbitIconURL from './microbit/microbit.png';
-import microbitInsetIconURL from './microbit/microbit-small.svg';
-import microbitConnectionIconURL from './microbit/microbit-illustration.svg';
-import microbitConnectionSmallIconURL from './microbit/microbit-small.svg';
+import microbitIconURL from "./microbit/microbit.png";
+import microbitInsetIconURL from "./microbit/microbit-small.svg";
+import microbitConnectionIconURL from "./microbit/microbit-illustration.svg";
+import microbitConnectionSmallIconURL from "./microbit/microbit-small.svg";
 
-import ev3IconURL from './ev3/ev3.png';
-import ev3InsetIconURL from './ev3/ev3-small.svg';
-import ev3ConnectionIconURL from './ev3/ev3-hub-illustration.svg';
-import ev3ConnectionSmallIconURL from './ev3/ev3-small.svg';
+import ev3IconURL from "./ev3/ev3.png";
+import ev3InsetIconURL from "./ev3/ev3-small.svg";
+import ev3ConnectionIconURL from "./ev3/ev3-hub-illustration.svg";
+import ev3ConnectionSmallIconURL from "./ev3/ev3-small.svg";
 
-import wedo2IconURL from './wedo2/wedo.png'; // TODO: Rename file names to match variable/prop names?
-import wedo2InsetIconURL from './wedo2/wedo-small.svg';
-import wedo2ConnectionIconURL from './wedo2/wedo-illustration.svg';
-import wedo2ConnectionSmallIconURL from './wedo2/wedo-small.svg';
-import wedo2ConnectionTipIconURL from './wedo2/wedo-button-illustration.svg';
+import wedo2IconURL from "./wedo2/wedo.png"; // TODO: Rename file names to match variable/prop names?
+import wedo2InsetIconURL from "./wedo2/wedo-small.svg";
+import wedo2ConnectionIconURL from "./wedo2/wedo-illustration.svg";
+import wedo2ConnectionSmallIconURL from "./wedo2/wedo-small.svg";
+import wedo2ConnectionTipIconURL from "./wedo2/wedo-button-illustration.svg";
 
-import boostIconURL from './boost/boost.png';
-import boostInsetIconURL from './boost/boost-small.svg';
-import boostConnectionIconURL from './boost/boost-illustration.svg';
-import boostConnectionSmallIconURL from './boost/boost-small.svg';
-import boostConnectionTipIconURL from './boost/boost-button-illustration.svg';
+import boostIconURL from "./boost/boost.png";
+import boostInsetIconURL from "./boost/boost-small.svg";
+import boostConnectionIconURL from "./boost/boost-illustration.svg";
+import boostConnectionSmallIconURL from "./boost/boost-small.svg";
+import boostConnectionTipIconURL from "./boost/boost-button-illustration.svg";
 
-import gdxforIconURL from './gdxfor/gdxfor.png';
-import gdxforInsetIconURL from './gdxfor/gdxfor-small.svg';
-import gdxforConnectionIconURL from './gdxfor/gdxfor-illustration.svg';
-import gdxforConnectionSmallIconURL from './gdxfor/gdxfor-small.svg';
+import gdxforIconURL from "./gdxfor/gdxfor.png";
+import gdxforInsetIconURL from "./gdxfor/gdxfor-small.svg";
+import gdxforConnectionIconURL from "./gdxfor/gdxfor-illustration.svg";
+import gdxforConnectionSmallIconURL from "./gdxfor/gdxfor-small.svg";
+
+// Pet Automation extension icon (using a simple pet icon)
+const petAutomationIconURL =
+    "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+cGV0LWljb248L3RpdGxlPjxnIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+PHBhdGggZD0iTTIwIDJjLTkuOTQgMC0xOCA4LjA2LTE4IDE4czguMDYgMTggMTggMTggMTgtOC4wNiAxOC0xOFMyOS45NCAyIDIwIDJ6bTAgMzJjLTcuNzMgMC0xNC02LjI3LTE0LTE0czYuMjctMTQgMTQtMTQgMTQgNi4yNyAxNCAxNC02LjI3IDE0LTE0IDE0eiIgZmlsbD0iIzQyQTVGNSIvPjxwYXRoIGQ9Ik0xNSAxOGMtMS4xIDAtMiAuOS0yIDJzLjkgMiAyIDIgMi0uOSAyLTItLjktMi0yLTJ6bTEwIDBjLTEuMSAwLTIgLjktMiAyczAuOSAyIDIgMiAyLS45IDItMi0uOS0yLTItMnoiIGZpbGw9IiM0MkE1RjUiLz48cGF0aCBkPSJNMjAgMjRjLTIuNzYgMC01LTIuMjQtNS01czIuMjQtNSA1LTUgNSAyLjI0IDUgNS0yLjI0IDUtNSA1eiIgZmlsbD0iIzQyQTVGNSIvPjwvZz48L3N2Zz4=";
+const petAutomationInsetIconURL = petAutomationIconURL;
 
 export default [
     {
@@ -55,7 +60,7 @@ export default [
                 id="gui.extension.music.name"
             />
         ),
-        extensionId: 'music',
+        extensionId: "music",
         iconURL: musicIconURL,
         insetIconURL: musicInsetIconURL,
         description: (
@@ -65,7 +70,7 @@ export default [
                 id="gui.extension.music.description"
             />
         ),
-        featured: true
+        featured: true,
     },
     {
         name: (
@@ -75,7 +80,7 @@ export default [
                 id="gui.extension.pen.name"
             />
         ),
-        extensionId: 'pen',
+        extensionId: "pen",
         iconURL: penIconURL,
         insetIconURL: penInsetIconURL,
         description: (
@@ -85,7 +90,7 @@ export default [
                 id="gui.extension.pen.description"
             />
         ),
-        featured: true
+        featured: true,
     },
     {
         name: (
@@ -95,7 +100,7 @@ export default [
                 id="gui.extension.videosensing.name"
             />
         ),
-        extensionId: 'videoSensing',
+        extensionId: "videoSensing",
         iconURL: videoSensingIconURL,
         insetIconURL: videoSensingInsetIconURL,
         description: (
@@ -105,7 +110,7 @@ export default [
                 id="gui.extension.videosensing.description"
             />
         ),
-        featured: true
+        featured: true,
     },
     {
         name: (
@@ -115,8 +120,8 @@ export default [
                 id="gui.extension.text2speech.name"
             />
         ),
-        extensionId: 'text2speech',
-        collaborator: 'Amazon Web Services',
+        extensionId: "text2speech",
+        collaborator: "Amazon Web Services",
         iconURL: text2speechIconURL,
         insetIconURL: text2speechInsetIconURL,
         description: (
@@ -127,7 +132,7 @@ export default [
             />
         ),
         featured: true,
-        internetConnectionRequired: true
+        internetConnectionRequired: true,
     },
     {
         name: (
@@ -137,8 +142,8 @@ export default [
                 id="gui.extension.translate.name"
             />
         ),
-        extensionId: 'translate',
-        collaborator: 'Google',
+        extensionId: "translate",
+        collaborator: "Google",
         iconURL: translateIconURL,
         insetIconURL: translateInsetIconURL,
         description: (
@@ -149,12 +154,12 @@ export default [
             />
         ),
         featured: true,
-        internetConnectionRequired: true
+        internetConnectionRequired: true,
     },
     {
-        name: 'Makey Makey',
-        extensionId: 'makeymakey',
-        collaborator: 'JoyLabz',
+        name: "Makey Makey",
+        extensionId: "makeymakey",
+        collaborator: "JoyLabz",
         iconURL: makeymakeyIconURL,
         insetIconURL: makeymakeyInsetIconURL,
         description: (
@@ -164,12 +169,12 @@ export default [
                 id="gui.extension.makeymakey.description"
             />
         ),
-        featured: true
+        featured: true,
     },
     {
-        name: 'micro:bit',
-        extensionId: 'microbit',
-        collaborator: 'micro:bit',
+        name: "micro:bit",
+        extensionId: "microbit",
+        collaborator: "micro:bit",
         iconURL: microbitIconURL,
         insetIconURL: microbitInsetIconURL,
         description: (
@@ -208,12 +213,12 @@ export default [
                 id="gui.extension.microbit.connectingMessage"
             />
         ),
-        helpLink: 'https://scratch.mit.edu/microbit'
+        helpLink: "https://scratch.mit.edu/microbit",
     },
     {
-        name: 'Go Direct Force & Acceleration',
-        extensionId: 'gdxfor',
-        collaborator: 'Vernier',
+        name: "Go Direct Force & Acceleration",
+        extensionId: "gdxfor",
+        collaborator: "Vernier",
         iconURL: gdxforIconURL,
         insetIconURL: gdxforInsetIconURL,
         description: (
@@ -252,12 +257,12 @@ export default [
                 id="gui.extension.gdxfor.connectingMessage"
             />
         ),
-        helpLink: 'https://scratch.mit.edu/vernier'
+        helpLink: "https://scratch.mit.edu/vernier",
     },
     {
-        name: 'LEGO MINDSTORMS EV3',
-        extensionId: 'ev3',
-        collaborator: 'LEGO',
+        name: "LEGO MINDSTORMS EV3",
+        extensionId: "ev3",
+        collaborator: "LEGO",
         iconURL: ev3IconURL,
         insetIconURL: ev3InsetIconURL,
         description: (
@@ -296,12 +301,12 @@ export default [
                 id="gui.extension.ev3.connectingMessage"
             />
         ),
-        helpLink: 'https://scratch.mit.edu/ev3'
+        helpLink: "https://scratch.mit.edu/ev3",
     },
     {
-        name: 'LEGO BOOST',
-        extensionId: 'boost',
-        collaborator: 'LEGO',
+        name: "LEGO BOOST",
+        extensionId: "boost",
+        collaborator: "LEGO",
         iconURL: boostIconURL,
         insetIconURL: boostInsetIconURL,
         description: (
@@ -342,12 +347,12 @@ export default [
                 id="gui.extension.boost.connectingMessage"
             />
         ),
-        helpLink: 'https://scratch.mit.edu/boost'
+        helpLink: "https://scratch.mit.edu/boost",
     },
     {
-        name: 'LEGO Education WeDo 2.0',
-        extensionId: 'wedo2',
-        collaborator: 'LEGO',
+        name: "LEGO Education WeDo 2.0",
+        extensionId: "wedo2",
+        collaborator: "LEGO",
         iconURL: wedo2IconURL,
         insetIconURL: wedo2InsetIconURL,
         description: (
@@ -388,6 +393,27 @@ export default [
                 id="gui.extension.wedo2.connectingMessage"
             />
         ),
-        helpLink: 'https://scratch.mit.edu/wedo'
-    }
+        helpLink: "https://scratch.mit.edu/wedo",
+    },
+    {
+        name: (
+            <FormattedMessage
+                defaultMessage="Pet Automation"
+                description="Name for the 'Pet Automation' extension"
+                id="gui.extension.petAutomation.name"
+            />
+        ),
+        extensionId: "petAutomation",
+        iconURL: petAutomationIconURL,
+        insetIconURL: petAutomationInsetIconURL,
+        description: (
+            <FormattedMessage
+                defaultMessage="Automate pet care with blocks."
+                description="Description for the 'Pet Automation' extension"
+                id="gui.extension.petAutomation.description"
+            />
+        ),
+        featured: true,
+        disabled: false,
+    },
 ];

@@ -87,6 +87,24 @@ class Scratch3PetAutomationBlocks {
                     }),
                 },
                 {
+                    opcode: "autoCleanWaste",
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: "petAutomation.autoCleanWaste",
+                        default: "auto clean waste",
+                        description: "Automatically clean waste from stage",
+                    }),
+                },
+                {
+                    opcode: "wasteIsThere",
+                    blockType: BlockType.BOOLEAN,
+                    text: formatMessage({
+                        id: "petAutomation.wasteIsThere",
+                        default: "waste is there?",
+                        description: "Check if there are waste items on stage",
+                    }),
+                },
+                {
                     opcode: "getFoodCount",
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
@@ -201,6 +219,36 @@ class Scratch3PetAutomationBlocks {
     autoClean(args, util) {
         // Emit a custom event that the GUI can listen to
         this.runtime.emit("PET_AUTO_CLEAN");
+    }
+
+    /**
+     * Auto clean waste from stage
+     * @param {object} args - the arguments to this block
+     * @param {object} util - utility object provided by the runtime
+     */
+    autoCleanWaste(args, util) {
+        // Emit a custom event that the GUI can listen to
+        this.runtime.emit("PET_AUTO_CLEAN_WASTE");
+    }
+
+    /**
+     * Check if waste is present on stage
+     * @param {object} args - the arguments to this block
+     * @param {object} util - utility object provided by the runtime
+     * @returns {boolean} true if waste is present, false otherwise
+     */
+    wasteIsThere(args, util) {
+        // Get the current target (sprite) that's running this block
+        const target = util.target;
+
+        // Check if the target has pet waste items
+        if (target.petWasteItems && target.petWasteItems.length > 0) {
+            return true;
+        }
+
+        // Fallback: check DOM for waste items
+        const wasteItems = document.querySelectorAll(".waste-item");
+        return wasteItems.length > 0;
     }
 
     /**

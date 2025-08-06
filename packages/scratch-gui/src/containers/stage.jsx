@@ -497,6 +497,10 @@ class Stage extends React.Component {
             "PET_AUTO_CLEAN",
             this.handleAutoClean
         );
+        this.props.vm.runtime.addListener(
+            "PET_AUTO_CLEAN_WASTE",
+            this.handleAutoCleanWaste
+        );
         // Start food spawn interval every 20s
         this.foodSpawnInterval = setInterval(() => this.spawnFood(), 20000);
         // Start stat decay interval every 1s for smooth animation
@@ -596,6 +600,10 @@ class Stage extends React.Component {
         this.props.vm.runtime.removeListener(
             "PET_AUTO_CLEAN",
             this.handleAutoClean
+        );
+        this.props.vm.runtime.removeListener(
+            "PET_AUTO_CLEAN_WASTE",
+            this.handleAutoCleanWaste
         );
     }
     questionListener(question) {
@@ -1321,6 +1329,8 @@ class Stage extends React.Component {
             target.petHappiness = this.state.happiness;
             target.petIsSick = this.state.isSick;
             target.petIsSleeping = this.state.isSleeping;
+            target.petWasteItems = this.state.wasteItems;
+            target.petFoodItems = this.state.foodItems;
         });
     }
     spawnFood() {
@@ -1503,6 +1513,37 @@ class Stage extends React.Component {
     handleAutoClean = () => {
         if (!this.state.petEnabled) return;
         this.handleCleanPet();
+    };
+
+    // Handler for automatic waste cleaning from VM blocks
+    handleAutoCleanWaste = () => {
+        if (!this.state.petEnabled) return;
+
+        // Check if we have enough energy to clean
+        if (this.state.energy < 8) {
+            this.setState({
+                petSpeechMessage:
+                    "I'm exhausted! Cleaning is hard with low energy!",
+                petSpeechVisible: true,
+            });
+            clearTimeout(this.speechTimeout);
+            this.speechTimeout = setTimeout(this.clearPetSpeech, 2000);
+            return;
+        }
+
+        // Clean all waste items from state
+        if (this.state.wasteItems && this.state.wasteItems.length > 0) {
+            this.setState((prevState) => ({
+                wasteItems: [],
+                energy: Math.max(
+                    0,
+                    prevState.energy - prevState.wasteItems.length * 3
+                ),
+            }));
+
+            // Play clean sound for waste removal
+            this.soundManager.playSound("clean", 60);
+        }
     };
     render() {
         const {

@@ -60,6 +60,15 @@ class Scratch3PetAutomationBlocks {
                     }),
                 },
                 {
+                    opcode: "autoSleep",
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: "petAutomation.autoSleep",
+                        default: "auto sleep pet",
+                        description: "Automatically put the pet to sleep",
+                    }),
+                },
+                {
                     opcode: "getFoodCount",
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
@@ -144,6 +153,16 @@ class Scratch3PetAutomationBlocks {
     autoCollectFood(args, util) {
         // Emit a custom event that the GUI can listen to
         this.runtime.emit("PET_AUTO_COLLECT_FOOD");
+    }
+
+    /**
+     * Auto sleep the pet
+     * @param {object} args - the arguments to this block
+     * @param {object} util - utility object provided by the runtime
+     */
+    autoSleep(args, util) {
+        // Emit a custom event that the GUI can listen to
+        this.runtime.emit("PET_AUTO_SLEEP");
     }
 
     /**

@@ -488,6 +488,10 @@ class Stage extends React.Component {
             "PET_AUTO_COLLECT_FOOD",
             this.handleAutoCollectFood
         );
+        this.props.vm.runtime.addListener(
+            "PET_AUTO_SLEEP",
+            this.handleAutoSleep
+        );
         // Start food spawn interval every 20s
         this.foodSpawnInterval = setInterval(() => this.spawnFood(), 20000);
         // Start stat decay interval every 1s for smooth animation
@@ -575,6 +579,10 @@ class Stage extends React.Component {
         this.props.vm.runtime.removeListener(
             "PET_AUTO_COLLECT_FOOD",
             this.handleAutoCollectFood
+        );
+        this.props.vm.runtime.removeListener(
+            "PET_AUTO_SLEEP",
+            this.handleAutoSleep
         );
     }
     questionListener(question) {
@@ -1464,6 +1472,12 @@ class Stage extends React.Component {
             const firstFood = this.state.foodItems[0];
             this.collectFood(firstFood.id);
         }
+    };
+
+    // Handler for automatic sleeping from VM blocks
+    handleAutoSleep = () => {
+        if (!this.state.petEnabled) return;
+        this.handleSleepPet();
     };
     render() {
         const {

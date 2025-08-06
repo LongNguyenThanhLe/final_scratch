@@ -78,6 +78,15 @@ class Scratch3PetAutomationBlocks {
                     }),
                 },
                 {
+                    opcode: "autoClean",
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: "petAutomation.autoClean",
+                        default: "auto clean pet",
+                        description: "Automatically clean the pet",
+                    }),
+                },
+                {
                     opcode: "getFoodCount",
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
@@ -182,6 +191,16 @@ class Scratch3PetAutomationBlocks {
     autoPlay(args, util) {
         // Emit a custom event that the GUI can listen to
         this.runtime.emit("PET_AUTO_PLAY");
+    }
+
+    /**
+     * Auto clean the pet
+     * @param {object} args - the arguments to this block
+     * @param {object} util - utility object provided by the runtime
+     */
+    autoClean(args, util) {
+        // Emit a custom event that the GUI can listen to
+        this.runtime.emit("PET_AUTO_CLEAN");
     }
 
     /**
